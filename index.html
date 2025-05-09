@@ -1,33 +1,659 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
 
-<!DOCTYPE html>
-<html>
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
 <head>
-  <title>منصة الاختبارات</title>
-  <meta charset="UTF-8">
-  <style>
+<meta charset="utf-8"/>
+<title>Ahmed Omar Math Professor</title>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<style>
     body {
-      font-family: sans-serif;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+    }
+    .sidebar {
+      width: 200px;
+      background-color: #2c3e50;
+      color: #ffffff;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      padding: 20px;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+      overflow-y: auto;
+    }
+    .sidebar .profile {
       text-align: center;
-      padding: 50px;
-      background: #f9f9f9;
+      margin-bottom: 20px;
     }
-    h1 { color: #333; margin-bottom: 40px; }
-    .button {
-      display: inline-block;
-      margin: 10px;
-      padding: 15px 30px;
-      font-size: 18px;
+    .sidebar .profile h2 {
+      font-size: 20px;
+      color: #f1c40f;
+      margin: 0;
+    }
+    .sidebar .profile p {
+      font-size: 14px;
+      color: #ffffff;
+      margin: 5px 0;
+    }
+    .sidebar a {
+      display: block;
+      color: #ffffff;
       text-decoration: none;
-      border-radius: 8px;
-      color: white;
+      padding: 12px 15px;
+      margin: 5px 0;
+      font-weight: 600;
+      font-size: 16px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      border-left: 4px solid transparent;
     }
-    .student { background-color: #3498db; }
-    .admin { background-color: #e74c3c; }
-  </style>
+    .sidebar a:hover {
+      background-color: #f1c40f;
+      color: #2c3e50;
+      border-left-color: #f1c40f;
+    }
+    .sidebar .dropdown {
+      position: relative;
+    }
+    .sidebar .dropdown-toggle {
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 15px;
+      margin: 5px 0;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 16px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      border-left: 4px solid transparent;
+    }
+    .sidebar .dropdown-toggle:hover {
+      background-color: #f1c40f;
+      color: #2c3e50;
+      border-left-color: #f1c40f;
+    }
+    .sidebar .dropdown-content {
+      display: none;
+      background-color: #34495e;
+      padding-left: 20px;
+      flex-direction: column;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .sidebar .dropdown-content.show {
+      display: block;
+    }
+    .sidebar .dropdown-content a {
+      padding: 10px 15px;
+      display: block;
+      color: #ffffff;
+      font-size: 14px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    .sidebar .dropdown-content a:hover {
+      background-color: #f1c40f;
+      color: #2c3e50;
+    }
+    .sidebar .dropdown-content .file-upload {
+      position: relative;
+      margin: 5px 0;
+      width: 100%;
+    }
+    .sidebar .dropdown-content .file-upload input[type="file"] {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      z-index: 1;
+    }
+    .sidebar .dropdown-content .file-upload label {
+      display: block;
+      padding: 8px 15px;
+      background-color: #f1c40f;
+      color: #2c3e50;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      text-align: center;
+      transition: background-color 0.3s ease;
+    }
+    .sidebar .dropdown-content .file-upload label:hover {
+      background-color: #d4ac0d;
+    }
+    .sidebar .dropdown-content .file-name {
+      display: block;
+      padding: 5px 10px;
+      color: #ffffff;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+    .sidebar .dropdown-content input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin: 5px 0;
+      border: none;
+      border-radius: 4px;
+      background-color: #34495e;
+      color: #ffffff;
+      box-sizing: border-box;
+    }
+    .sidebar .dropdown-content input[type="text"]::placeholder {
+      color: #bdc3c7;
+    }
+    .sidebar .dropdown-content .uploaded-item {
+      padding: 5px 15px;
+      color: #ffffff;
+      font-size: 12px;
+    }
+    .sidebar .social-links {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+    }
+    .sidebar .social-links a {
+      display: inline-block;
+      padding: 0;
+      font-size: 20px;
+      color: #ffffff;
+      transition: color 0.3s ease;
+    }
+    .sidebar .social-links a:hover {
+      color: #f1c40f;
+    }
+    .content {
+      margin-left: 200px;
+      width: calc(100% - 200px);
+    }
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #fff;
+      padding: 15px 30px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      overflow: visible;
+    }
+    .nav-left, .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .nav-item {
+      position: relative;
+    }
+    .nav-left a, .nav-right button {
+      text-decoration: none;
+      color: #1a252f;
+      background: none;
+      border: none;
+      font-weight: 700;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 12px 15px;
+      line-height: 1.6;
+      white-space: nowrap;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      transition: color 0.3s ease;
+    }
+    .nav-left a:hover, .nav-right button:hover {
+      color: #d4ac0d;
+    }
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background-color: #fff;
+      box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
+      min-width: 160px;
+      z-index: 1000;
+      flex-direction: column;
+    }
+    .dropdown-content a {
+      padding: 10px;
+      display: block;
+      color: #1a252f;
+      font-size: 14px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    .dropdown-content a:hover {
+      background-color: #f1f1f1;
+      color: #d4ac0d;
+    }
+    .dropdown-content .file-upload {
+      position: relative;
+      margin: 5px 0;
+      width: 100%;
+    }
+    .dropdown-content .file-upload input[type="file"] {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      z-index: 1;
+    }
+    .dropdown-content .file-upload label {
+      display: block;
+      padding: 8px 15px;
+      background-color: #f1c40f;
+      color: #2c3e50;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      text-align: center;
+      transition: background-color 0.3s ease;
+    }
+    .dropdown-content .file-upload label:hover {
+      background-color: #d4ac0d;
+    }
+    .dropdown-content .file-name {
+      display: block;
+      padding: 5px 10px;
+      color: #1a252f;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+    .dropdown-content input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin: 5px 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    .dropdown-content input[type="text"]::placeholder {
+      color: #bdc3c7;
+    }
+    .dropdown-content .uploaded-item {
+      padding: 5px 10px;
+      color: #1a252f;
+      font-size: 12px;
+    }
+    .nav-item:hover .dropdown-content {
+      display: flex;
+    }
+    .highlight-btn {
+      background-color: #f1c40f;
+      color: #2c3e50;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .highlight-btn:hover {
+      background-color: #d4ac0d;
+    }
+    .hero {
+      background-color: #2c3e50;
+      color: white;
+      text-align: center;
+      padding: 60px 20px;
+    }
+    .hero h1 {
+      font-size: 48px;
+      margin: 0;
+    }
+    .hero h2 {
+      color: #f1c40f;
+      font-size: 24px;
+      margin: 10px 0;
+    }
+    .hero p {
+      font-size: 18px;
+      font-weight: bold;
+    }
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 150px;
+      }
+      .content {
+        margin-left: 150px;
+        width: calc(100% - 150px);
+      }
+    }
+    @media (max-width: 576px) {
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        padding: 10px;
+      }
+      .content {
+        margin-left: 0;
+        width: 100%;
+      }
+    }
+</style>
 </head>
 <body>
-  <h1>مرحبًا بك في منصة الاختبارات</h1>
-  <a href="public/index.html" class="button student">🔵 دخول الطالب</a>
-  <a href="admin/CreateTests.html" class="button admin">🔴 دخول المدير</a>
+<div class="sidebar">
+<div class="profile">
+<h2>Ahmed Omar</h2>
+<p>Math Professor</p>
+</div>
+<a href="#">Home</a>
+<div class="dropdown">
+<a class="dropdown-toggle" onclick="toggleDropdown(this)">ACT ▼</a>
+<div class="dropdown-content" id="actDropdownContent">
+<a href="ACT_I_Test_List_Preview.html" target="_blank">ACT I</a>
+<div class="file-upload">
+<input type="file" accept=".pdf,.doc,.docx,.mp4,.mov" id="act-i-file" onchange="handleFileUpload('act-i', this)">
+<label for="act-i-file">Upload File</label>
+</div>
+<span id="act-i-file-name" class="file-name"></span>
+<input type="text" placeholder="Video Link" onblur="handleVideoLink('act-i', this)">
+<div id="act-i-uploads"></div>
+<a href="ACT_II_Test_List_Preview.html" target="_blank">ACT II</a>
+<div class="file-upload">
+<input type="file" accept=".pdf,.doc,.docx,.mp4,.mov" id="act-ii-file" onchange="handleFileUpload('act-ii', this)">
+<label for="act-ii-file">Upload File</label>
+</div>
+<span id="act-ii-file-name" class="file-name"></span>
+<input type="text" placeholder="Video Link" onblur="handleVideoLink('act-ii', this)">
+<div id="act-ii-uploads"></div>
+</div>
+</div>
+<div class="dropdown">
+<a class="dropdown-toggle" onclick="toggleDropdown(this)">EST ▼</a>
+<div class="dropdown-content" id="estDropdownContent">
+<a href="EST_I_Test_List_Preview.html" target="_blank">EST I</a>
+<div class="file-upload">
+<input type="file" accept=".pdf,.doc,.docx,.mp4,.mov" id="est-i-file" onchange="handleFileUpload('est-i', this)">
+<label for="est-i-file">Upload File</label>
+</div>
+<span id="est-i-file-name" class="file-name"></span>
+<input type="text" placeholder="Video Link" onblur="handleVideoLink('est-i', this)">
+<div id="est-i-uploads"></div>
+<a href="EST_II_Test_List_Preview.html" target="_blank">EST II</a>
+<div class="file-upload">
+<input type="file" accept=".pdf,.doc,.docx,.mp4,.mov" id="est-ii-file" onchange="handleFileUpload('est-ii', this)">
+<label for="est-ii-file">Upload File</label>
+</div>
+<span id="est-ii-file-name" class="file-name"></span>
+<input type="text" placeholder="Video Link" onblur="handleVideoLink('est-ii', this)">
+<div id="est-ii-uploads"></div>
+</div>
+</div>
+<div class="dropdown">
+<a class="dropdown-toggle" onclick="toggleDropdown(this)">Digital SAT ▼</a>
+<div class="dropdown-content" id="digitalSatDropdownContent">
+<a href="Digital_SAT_Test_List_PREVIEW.html" target="_blank">SAT I</a>
+<div class="file-upload">
+<input type="file" accept=".pdf,.doc,.docx,.mp4,.mov" id="digital-sat-file" onchange="handleFileUpload('digital-sat', this)">
+<label for="digital-sat-file">Upload File</label>
+</div>
+<span id="digital-sat-file-name" class="file-name"></span>
+<input type="text" placeholder="Video Link" onblur="handleVideoLink('digital-sat', this)">
+<div id="digital-sat-uploads"></div>
+</div>
+</div>
+<div class="dropdown">
+<a class="dropdown-toggle" onclick="toggleDropdown(this)">Univ Courses ▼</a>
+<div class="dropdown-content" id="univCoursesDropdownContent">
+<a href="University_Courses_Test_List_PREVIEW.html" target="_blank">University Courses</a>
+<div class="file-upload">
+<input type="file" accept=".pdf,.doc,.docx,.mp4,.mov" id="univ-course-file" onchange="handleFileUpload('univ-course', this)">
+<label for="univ-course-file">Upload File</label>
+</div>
+<span id="univ-course-file-name" class="file-name"></span>
+<input type="text" placeholder="Video Link" onblur="handleVideoLink('univ-course', this)">
+<div id="univ-course-uploads"></div>
+</div>
+</div>
+<div class="dropdown">
+<a class="dropdown-toggle" onclick="toggleDropdown(this)">Tests ▼</a>
+<div class="dropdown-content" id="testsDropdownContent">
+<a href="ACT_I_Test_List_Preview.html" target="_blank">ACT I</a>
+<a href="ACT_II_Test_List_Preview.html" target="_blank">ACT II</a>
+<a href="EST_I_Test_List_Preview.html" target="_blank">EST I</a>
+<a href="EST_II_Test_List_Preview.html" target="_blank">EST II</a>
+<a href="Digital_SAT_Test_List_PREVIEW.html" target="_blank">Digital SAT</a>
+<a href="University_Courses_Test_List_PREVIEW.html" target="_blank">University Courses</a>
+</div>
+</div>
+<a href="Resources.html" target="_blank">Resources</a>
+<a href="#">Book Shop</a>
+<a href="#">Contact Us</a>
+<a href="#">Score Calculator</a>
+<a href="#">News</a>
+<a href="CreateTests1.html?type=act-i" onclick="openCreateTest('act-i')">Create Tests</a>
+<div class="social-links">
+<a href="#" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+<a href="#" title="Twitter"><i class="fab fa-twitter"></i></a>
+<a href="#" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+</div>
+</div>
+<div class="content">
+<div class="navbar">
+<div class="nav-left">
+<a href="#">Home</a>
+<div class="nav-item">
+<a href="#">ACT ▼</a>
+<div class="dropdown-content" id="navActDropdownContent">
+<a href="ACT_I_Test_List_Preview.html" target="_blank">ACT I</a>
+<div class="file-upload">
+<input type="file" accept=".pdf,.doc,.docx,.mp4,.mov" id="nav-act-i-file" onchange="handleFileUpload('act-i', this)">
+<label for="nav-act-i-file">Upload File</label>
+</div>
+<span id="nav-act-i-file-name" class="file-name"></span>
+<input type="text" placeholder="Video Link" onblur="handleVideoLink('act-i', this)">
+<div id="nav-act-i-uploads"></div>
+<a href="ACT_II_Test_List_Preview.html" target="_blank">ACT II</a>
+<div class="file-upload">
+<input type="file" accept=".pdf,.doc,.docx,.mp4,.mov" id="nav-act-ii-file" onchange="handleFileUpload('act-ii', this)">
+<label for="nav-act-ii-file">Upload File</label>
+</div>
+<span id="nav-act-ii-file-name" class="file-name"></span>
+<input type="text" placeholder="Video Link" onblur="handleVideoLink('act-ii', this)">
+<div id="nav-act-ii-uploads"></div>
+</div>
+</div>
+<div class="nav-item">
+<a href="#">EST ▼</a>
+<div class="dropdown-content" id="navEstDropdownContent">
+<a href="EST_I_Test_List_Preview.html" target="_blank">EST I</a>
+<div class="file-upload">
+<input type="file" accept=".pdf,.doc,.docx,.mp4,.mov" id="nav-est-i-file" onchange="handleFileUpload('est-i', this)">
+<label for="nav-est-i-file">Upload File</label>
+</div>
+<span id="nav-est-i-file-name" class="file-name"></span>
+<input type="text" placeholder="Video Link" onblur="handleVideoLink('est-i', this)">
+<div id="nav-est-i-uploads"></div>
+<a href="EST_II_Test_List_Preview.html" target="_blank">EST II</a>
+<div class="file-upload">
+<input type="file" accept=".pdf,.doc,.docx,.mp4,.mov" id="nav-est-ii-file" onchange="handleFileUpload('est-ii', this)">
+<label for="nav-est-ii-file">Upload File</label>
+</div>
+<span id="nav-est-ii-file-name" class="file-name"></span>
+<input type="text" placeholder="Video Link" onblur="handleVideoLink('est-ii', this)">
+<div id="nav-est-ii-uploads"></div>
+</div>
+</div>
+<div class="nav-item">
+<a href="#">Digital SAT ▼</a>
+<div class="dropdown-content" id="navDigitalSatDropdownContent">
+<a href="Digital_SAT_Test_List_PREVIEW.html" target="_blank">SAT I</a>
+<div class="file-upload">
+<input type="file" accept=".pdf,.doc,.docx,.mp4,.mov" id="nav-digital-sat-file" onchange="handleFileUpload('digital-sat', this)">
+<label for="nav-digital-sat-file">Upload File</label>
+</div>
+<span id="nav-digital-sat-file-name" class="file-name"></span>
+<input type="text" placeholder="Video Link" onblur="handleVideoLink('digital-sat', this)">
+<div id="nav-digital-sat-uploads"></div>
+</div>
+</div>
+<div class="nav-item">
+<a href="#">Univ Courses ▼</a>
+<div class="dropdown-content" id="navUnivCoursesDropdownContent">
+<a href="University_Courses_Test_List_PREVIEW.html" target="_blank">University Courses</a>
+<div class="file-upload">
+<input type="file" accept=".pdf,.doc,.docx,.mp4,.mov" id="nav-univ-course-file" onchange="handleFileUpload('univ-course', this)">
+<label for="nav-univ-course-file">Upload File</label>
+</div>
+<span id="nav-univ-course-file-name" class="file-name"></span>
+<input type="text" placeholder="Video Link" onblur="handleVideoLink('univ-course', this)">
+<div id="nav-univ-course-uploads"></div>
+</div>
+</div>
+<div class="nav-item">
+<a href="#">Tests ▼</a>
+<div class="dropdown-content" id="navTestsDropdownContent">
+<a href="ACT_I_Test_List_Preview.html" target="_blank">ACT I</a>
+<a href="ACT_II_Test_List_Preview.html" target="_blank">ACT II</a>
+<a href="EST_I_Test_List_Preview.html" target="_blank">EST I</a>
+<a href="EST_II_Test_List_Preview.html" target="_blank">EST II</a>
+<a href="Digital_SAT_Test_List_PREVIEW.html" target="_blank">Digital SAT</a>
+<a href="University_Courses_Test_List_PREVIEW.html" target="_blank">University Courses</a>
+</div>
+</div>
+<a href="Resources.html" target="_blank">Resources</a>
+<a href="#">Book Shop</a>
+<a href="#">Contact Us</a>
+<a href="#">Score Calculator</a>
+<a href="#">News</a>
+</div>
+<div class="nav-right">
+<button class="highlight-btn">Login</button>
+<button class="highlight-btn">Register Now</button>
+</div>
+</div>
+<div class="hero">
+<h1>AHMED OMAR</h1>
+<h2>MATH PROFESSOR</h2>
+<p>
+        More than 40 years of experience teaching university-level students<br/>
+        More than 15 years of experience teaching American Diploma students
+      </p>
+</div>
+</div>
+<script>
+    function toggleDropdown(element) {
+      const dropdownContent = element.nextElementSibling;
+      dropdownContent.classList.toggle('show');
+    }
+
+    function openCreateTest(type) {
+      window.location.href = `CreateTests1.html?type=${type}&action=create`;
+    }
+
+    function handleFileUpload(category, input) {
+      const file = input.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const data = e.target.result;
+          const uploads = JSON.parse(localStorage.getItem('uploads') || '{}');
+          uploads[category] = uploads[category] || [];
+          uploads[category].push({ name: file.name, type: file.type, data: data });
+          localStorage.setItem('uploads', JSON.stringify(uploads));
+          displayFileName(category, file.name);
+          displayUploads(category);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function handleVideoLink(category, input) {
+      const link = input.value.trim();
+      if (link) {
+        const uploads = JSON.parse(localStorage.getItem('uploads') || '{}');
+        uploads[category] = uploads[category] || [];
+        uploads[category].push({ name: 'Video Link', type: 'link', data: link });
+        localStorage.setItem('uploads', JSON.stringify(uploads));
+        input.value = '';
+        displayUploads(category);
+      }
+    }
+
+    function displayFileName(category, fileName) {
+      const fileNameSpan = document.getElementById(`${category}-file-name`);
+      if (fileNameSpan) {
+        fileNameSpan.textContent = fileName || 'No file chosen';
+      }
+      const navFileNameSpan = document.getElementById(`nav-${category}-file-name`);
+      if (navFileNameSpan) {
+        navFileNameSpan.textContent = fileName || 'No file chosen';
+      }
+    }
+
+    function displayUploads(category) {
+      const uploads = JSON.parse(localStorage.getItem('uploads') || '{}');
+      const items = uploads[category] || [];
+      const sidebarDiv = document.getElementById(`${category}-uploads`);
+      const navDiv = document.getElementById(`nav-${category}-uploads`);
+      if (sidebarDiv) sidebarDiv.innerHTML = '';
+      if (navDiv) navDiv.innerHTML = '';
+
+      items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'uploaded-item';
+        div.textContent = item.name + (item.type === 'link' ? ' (Link)' : '');
+        if (sidebarDiv) sidebarDiv.appendChild(div.cloneNode(true));
+        if (navDiv) navDiv.appendChild(div.cloneNode(true));
+      });
+    }
+
+    window.onload = function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const action = urlParams.get('action');
+      if (action === 'create') {
+        window.location.href = `CreateTests1.html?type=${urlParams.get('type')}&action=create`;
+      }
+
+      ['act-i', 'act-ii', 'est-i', 'est-ii', 'digital-sat', 'univ-course'].forEach(category => {
+        displayUploads(category);
+        displayFileName(category, null);
+      });
+    };
+</script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93d275e64f247221',t:'MTc0NjgwNjk1OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93d4163dcbb2bd21',t:'MTc0NjgyNDAxMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 </body>
 </html>
