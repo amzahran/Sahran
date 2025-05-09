@@ -1,2 +1,0 @@
-# Sahran
-Platform 
