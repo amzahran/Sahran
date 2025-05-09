@@ -1,0 +1,130 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>UNIV-COURSE Test List</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: Arial, sans-serif;
+    }
+    body {
+        background-color: #f5f5f5;
+    }
+    .container {
+        max-width: 1000px;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    h2 {
+        color: #2c3e50;
+        margin-bottom: 20px;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+    th, td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    th {
+        background-color: #3498db;
+        color: white;
+    }
+    tr:hover {
+        background-color: #f1f1f1;
+    }
+    .preview-btn {
+        background-color: #f1c40f;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .preview-btn:hover {
+        background-color: #d4ac0d;
+    }
+    .back-btn {
+        display: inline-block;
+        margin-bottom: 20px;
+        color: #3498db;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    .center-text {
+        text-align: center;
+    }
+</style>
+</head>
+<body>
+<div class="container">
+<a class="back-btn" href="javascript:history.back()">← Back</a>
+<h2>UNIV-COURSE Test List</h2>
+<table>
+<thead>
+<tr>
+<th>Test Name</th>
+<th>Free/Paid</th>
+<th class="center-text">Created At</th>
+<th class="center-text">Actions</th>
+</tr>
+</thead>
+<tbody id="testList"></tbody>
+</table>
+</div>
+
+<script>
+    const testType = "univ-course";
+    loadTests();
+
+    function loadTests() {
+        const savedTests = JSON.parse(localStorage.getItem('savedTests')) || {};
+        const testList = document.getElementById('testList');
+        testList.innerHTML = '';
+
+        Object.keys(savedTests).forEach(testId => {
+            const test = savedTests[testId];
+            if (test.type === testType) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${test.name || test.data?.title || 'Unnamed Test'}</td>
+                    <td>${test.data?.isPaid ? 'Paid' : 'Free'}</td>
+                    <td class="center-text">${new Date(test.createdAt).toLocaleString()}</td>
+                    <td class="center-text">
+                        <button class="preview-btn" onclick="window.location.href='Test.html?id=${testId}'">Preview</button>
+                    </td>
+                `;
+                testList.appendChild(row);
+            }
+        });
+    }
+</script>
+
+<script>
+    // Override preview button behavior based on actual testId from localStorage
+    window.onload = function () {
+        const savedTests = JSON.parse(localStorage.getItem('savedTests')) || {};
+        document.querySelectorAll('.preview-btn').forEach((btn, index) => {
+            const testId = Object.keys(savedTests).filter(id => savedTests[id].type === 'univ-course')[index];
+            if (testId) {
+                btn.onclick = function () {
+                    window.location.href = 'Test.html?id=' + testId;
+                };
+            }
+        });
+    };
+</script>
+
+</body>
+</html>
