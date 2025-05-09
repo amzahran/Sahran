@@ -1,0 +1,195 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script>```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital SAT Test List</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .delete-btn {
+            background-color: #e74c3c;
+        }
+        .delete-btn:hover {
+            background-color: #c0392b;
+        }
+        .preview-btn {
+            background-color: #f1c40f;
+        }
+        .preview-btn:hover {
+            background-color: #d4ac0d;
+        }
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #3498db;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .center-text {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="javascript:history.back()" class="back-btn">← Back</a>
+        <h2>Digital SAT Test List</h2>
+        <table id="testTable">
+            <thead>
+                <tr>
+                    <th>Test Name</th>
+                    <th>Free/Paid</th>
+                    <th class="center-text">Created At</th>
+                    <th class="center-text">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="testList"></tbody>
+        </table>
+    </div>
+
+    <script>
+        // Load tests based on type from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const testType = urlParams.get('type') || 'digital-sat';
+        loadTests();
+
+        function loadTests() {
+            const savedTests = JSON.parse(localStorage.getItem('savedTests')) || {};
+            const testList = document.getElementById('testList');
+            testList.innerHTML = '';
+
+            Object.keys(savedTests).forEach(testId => {
+                const test = savedTests[testId];
+                if (test.type === testType) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${test.data.title || 'Unnamed Test'}</td>
+                        <td>${test.data.isPaid ? 'Paid' : 'Free'}</td>
+                        <td class="center-text">${new Date(test.createdAt).toLocaleString()}</td>
+                        <td class="center-text">
+                            <button onclick="checkAndRedirect('CreateTests1.html?type=digital-sat&id=${testId}')">Edit</button>
+                            <button class="preview-btn" onclick="window.location.href='test.html?id=${testId}'">Preview</button>
+                            <button class="delete-btn" onclick="deleteTest('${testId}')">Delete</button>
+                        </td>
+                    `;
+                    testList.appendChild(row);
+                }
+            });
+        }
+
+        function checkAndRedirect(url) {
+            fetch(url)
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = url;
+                    } else {
+                        alert('The edit page could not be accessed. Please ensure the file exists and is in the correct location.');
+                    }
+                })
+                .catch(error => {
+                    alert('An error occurred while accessing the edit page. Please check the file path or try again.');
+                    console.error('Fetch error:', error);
+                });
+        }
+
+        function deleteTest(testId) {
+            if (confirm('Are you sure you want to delete this test?')) {
+                const savedTests = JSON.parse(localStorage.getItem('savedTests')) || {};
+                delete savedTests[testId];
+                localStorage.setItem('savedTests', JSON.stringify(savedTests));
+                loadTests();
+            }
+        }
+    </script>
+</body>
+</html>
+```
