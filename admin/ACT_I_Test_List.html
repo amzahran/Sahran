@@ -77,6 +77,11 @@
         .center-text {
             text-align: center;
         }
+        .no-tests {
+            text-align: center;
+            color: #7f8c8d;
+            padding: 20px;
+        }
     </style>
 </head>
 <body>
@@ -94,9 +99,31 @@
             </thead>
             <tbody id="testList"></tbody>
         </table>
+        <div id="noTestsMessage" class="no-tests" style="display: none;">
+            No tests found for this type.
+        </div>
     </div>
 
     <script>
+        // Initialize sample data if none exists
+        if (!localStorage.getItem('savedTests')) {
+            const sampleTests = {
+                'test1': {
+                    type: 'act-i',
+                    name: 'Sample ACT I Test',
+                    data: { title: 'Sample ACT I Test', isPaid: false, description: 'This is a sample test for ACT I.' },
+                    createdAt: new Date().toISOString()
+                },
+                'test2': {
+                    type: 'act-i',
+                    name: 'Paid ACT I Test',
+                    data: { title: 'Paid ACT I Test', isPaid: true, description: 'This is a paid test for ACT I.' },
+                    createdAt: new Date().toISOString()
+                }
+            };
+            localStorage.setItem('savedTests', JSON.stringify(sampleTests));
+        }
+
         const urlParams = new URLSearchParams(window.location.search);
         const testType = urlParams.get('type') || 'act-i';
         loadTests();
@@ -104,49 +131,44 @@
         function loadTests() {
             const savedTests = JSON.parse(localStorage.getItem('savedTests')) || {};
             const testList = document.getElementById('testList');
+            const noTestsMessage = document.getElementById('noTestsMessage');
             testList.innerHTML = '';
 
+            let hasTests = false;
             Object.keys(savedTests).forEach(testId => {
                 const test = savedTests[testId];
-                console.log('Loaded test:', testId, test);
+                if (!testType || test.type === testType) {
+                    hasTests = true;
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${test.name || test.data?.title || 'Unnamed Test'}</td>
+                        <td>${test.data?.isPaid ? 'Paid' : 'Free'}</td>
+                        <td class="center-text">${new Date(test.createdAt).toLocaleString()}</td>
+                        <td class="center-text">
+                            <button onclick="checkAndRedirect('CreateTests.html?type=act-i&id=${testId}')">Edit</button>
+                            <button class="preview-btn" onclick="window.location.href='Test.html?id=${testId}'">Preview</button>
+                            <button class="delete-btn" onclick="deleteTest('${testId}')">Delete</button>
+                        </td>
+                    `;
+                    testList.appendChild(row);
+                }
+            });
 
-                const row = document.createElement('tr');
-                const testName = test.name || (test.data && test.data.title) || 'Unnamed Test';
-                const isPaid = (test.data && test.data.isPaid) ? 'Paid' : 'Free';
-                const createdAt = test.createdAt ? new Date(test.createdAt).toLocaleString() : 'N/A';
-
-                row.innerHTML = `
-                    <td>${testName}</td>
-                    <td>${isPaid}</td>
-                    <td class="center-text">${createdAt}</td>
-                    <td class="center-text">
-                        <button onclick="checkAndRedirect('CreateTests.html?type=${test.type || ''}&id=${testId}')">Edit</button>
-                        <button class="preview-btn" onclick="window.location.href='Test.html?id=${testId}'">Preview</button>
-                        <button class="delete-btn" onclick="deleteTest('${testId}')">Delete</button>
-                    </td>
-                `;
-                testList.appendChild(row);
-            });
-        }
-            });
-        }
-            });
+            noTestsMessage.style.display = hasTests ? 'none' : 'block';
         }
 
         function checkAndRedirect(url) {
-    window.location.href = url;
-})
+            const fullUrl = `admin/${url}`; // Add admin/ to the path
+            fetch(fullUrl, { method: 'HEAD' })
                 .then(response => {
-                    console.log('Fetch response:', response);
                     if (response.ok) {
-                        console.log('File found, redirecting to:', url);
-                        window.location.href = url;
+                        window.location.href = fullUrl;
                     } else {
-                        alert(`The edit page could not be accessed. Status: ${response.status} (${response.statusText}). Please ensure the file "CreateTests.html" exists in the correct location. If running locally, try using a local server (e.g., Live Server or XAMPP).`);
+                        alert(`The edit page could not be accessed. Status: ${response.status} (${response.statusText}). Please ensure the file "CreateTests.html" exists in the admin folder.`);
                     }
                 })
                 .catch(error => {
-                    alert('An error occurred while accessing the edit page. Error: ' + error.message + '. If you are running this file locally (file://), please use a local server (e.g., Live Server or XAMPP).');
+                    alert('An error occurred while accessing the edit page. Error: ' + error.message + '.');
                     console.error('Fetch error:', error);
                 });
         }
