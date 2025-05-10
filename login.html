@@ -1,47 +1,8 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
-<html lang="ar">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>تسجيل الدخول</title>
+  <title>Exam System - Login</title>
   <style>
     body {
       font-family: Tahoma, sans-serif;
@@ -50,6 +11,7 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
+      margin: 0;
     }
     .login-box {
       background: white;
@@ -57,6 +19,11 @@
       border-radius: 10px;
       box-shadow: 0 0 15px rgba(0,0,0,0.2);
       text-align: center;
+      width: 350px;
+    }
+    h2 {
+      color: #2c3e50;
+      margin-bottom: 25px;
     }
     input {
       width: 100%;
@@ -64,6 +31,7 @@
       margin: 8px 0;
       border-radius: 5px;
       border: 1px solid #ccc;
+      font-family: Tahoma;
     }
     button {
       background-color: #3498db;
@@ -74,23 +42,34 @@
       border-radius: 5px;
       font-size: 16px;
       cursor: pointer;
+      margin-top: 15px;
+      font-family: Tahoma;
     }
     button:hover {
       background-color: #2980b9;
     }
+    .register-btn {
+      background-color: #2ecc71;
+      margin-top: 10px;
+    }
+    .register-btn:hover {
+      background-color: #27ae60;
+    }
     .error {
       color: red;
       margin-top: 10px;
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
   <div class="login-box">
-    <h2>تسجيل الدخول</h2>
-    <input type="text" id="username" placeholder="اسم المستخدم">
-    <input type="password" id="password" placeholder="كلمة المرور">
-    <button onclick="login()">دخول</button>
+    <h2>Exam System Login</h2>
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
     <div class="error" id="error-msg"></div>
+    <button onclick="login()">Login</button>
+    <button class="register-btn" onclick="window.location.href='register.html'">Register New Account</button>
   </div>
 
   <script>
@@ -101,15 +80,33 @@
 
       if (user === "admin" && pass === "1234") {
         localStorage.setItem('loggedInAs', 'admin');
-        window.location.href = "index.html";
-      } else if (user === "student" && pass === "0000") {
-        localStorage.setItem('loggedInAs', 'student');
-        window.location.href = "public/index.html";
-      } else {
-        errorMsg.textContent = "بيانات الدخول غير صحيحة!";
+        window.location.href = "admin/index.html";
+      } 
+      else if (user === "teacher" && pass === "5678") {
+        localStorage.setItem('loggedInAs', 'teacher');
+        window.location.href = "teacher/index.html";
+      }
+      else {
+        // Check registered users
+        const registeredUsers = JSON.parse(localStorage.getItem('registeredStudents') || '[]');
+        const foundUser = registeredUsers.find(u => u.username === user && u.password === pass);
+        
+        if (foundUser) {
+          localStorage.setItem('loggedInAs', 'student');
+          localStorage.setItem('userGrade', foundUser.grade);
+          window.location.href = "student/index.html";
+        } else {
+          errorMsg.textContent = "Invalid username or password!";
+        }
       }
     }
+
+    // Login on Enter key press
+    document.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        login();
+      }
+    });
   </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93d5a44f694bb053',t:'MTc0Njg0MDMxNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 </body>
 </html>
