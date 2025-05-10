@@ -1,0 +1,118 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Student Registration</title>
+  <style>
+    body {
+      font-family: Tahoma, sans-serif;
+      background: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .register-box {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+      text-align: center;
+      width: 350px;
+    }
+    h2 {
+      color: #2c3e50;
+      margin-bottom: 25px;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-family: Tahoma;
+    }
+    button {
+      background-color: #2ecc71;
+      color: white;
+      border: none;
+      padding: 12px;
+      width: 100%;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 15px;
+      font-family: Tahoma;
+    }
+    button:hover {
+      background-color: #27ae60;
+    }
+    .error {
+      color: red;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    .success {
+      color: green;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="register-box">
+    <h2>Register New Student</h2>
+    <input type="text" id="fullName" placeholder="Full Name">
+    <input type="text" id="grade" placeholder="Grade">
+    <input type="text" id="mobile" placeholder="Mobile">
+    <input type="email" id="email" placeholder="Email">
+    <input type="text" id="newUsername" placeholder="Username">
+    <input type="password" id="newPassword" placeholder="Password">
+    <input type="password" id="confirmPassword" placeholder="Confirm Password">
+    <div class="error" id="error-msg"></div>
+    <div class="success" id="success-msg"></div>
+    <button onclick="register()">Register</button>
+  </div>
+
+  <script>
+    function register() {
+      const name = document.getElementById("fullName").value.trim();
+      const grade = document.getElementById("grade").value.trim();
+      const mobile = document.getElementById("mobile").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const username = document.getElementById("newUsername").value.trim();
+      const password = document.getElementById("newPassword").value.trim();
+      const confirmPassword = document.getElementById("confirmPassword").value.trim();
+      const errorMsg = document.getElementById("error-msg");
+      const successMsg = document.getElementById("success-msg");
+
+      errorMsg.textContent = "";
+      successMsg.textContent = "";
+
+      if (!name || !grade || !mobile || !email || !username || !password || !confirmPassword) {
+        errorMsg.textContent = "Please fill in all fields.";
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        errorMsg.textContent = "Passwords do not match.";
+        return;
+      }
+
+      const users = JSON.parse(localStorage.getItem("registeredStudents") || "[]");
+      if (users.some(u => u.username === username)) {
+        errorMsg.textContent = "Username already exists.";
+        return;
+      }
+
+      users.push({ name, grade, mobile, email, username, password });
+      localStorage.setItem("registeredStudents", JSON.stringify(users));
+
+      successMsg.textContent = "Registration successful! You can now log in.";
+      document.querySelectorAll("input").forEach(input => input.value = "");
+    }
+  </script>
+</body>
+</html>
