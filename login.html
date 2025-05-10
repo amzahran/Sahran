@@ -64,7 +64,7 @@
     <input type="password" id="password" placeholder="Password">
     <div class="error" id="error-msg"></div>
     <button onclick="login()">Login</button>
-    <button class="register-btn" onclick="window.location.href='register_updated.html'">Register New Account</button>
+    <button class="register-btn" onclick="window.location.href='register.html'">Register New Account</button>
   </div>
 
   <script>
@@ -75,20 +75,9 @@
 
       if (user === "admin" && pass === "1234") {
         localStorage.setItem('loggedInAs', 'admin');
-        window.location.href = "admin/index.html";
+        window.location.href = "index.html";
       } else {
-        const users = JSON.parse(localStorage.getItem("registeredStudents") || "[]");
-        const foundUser = users.find(u => u.username === user && u.password === pass);
-        if (foundUser) {
-          localStorage.setItem('loggedInAs', 'student');
-          localStorage.setItem('userGrade', foundUser.grade);
-          localStorage.setItem('userName', foundUser.name);
-          localStorage.setItem('userEmail', foundUser.email);
-          localStorage.setItem('userMobile', foundUser.mobile);
-          window.location.href = "student/index.html";
-        } else {
-          errorMsg.textContent = "Invalid username or password!";
-        }
+        errorMsg.textContent = "Only admin access is currently allowed.";
       }
     }
 
