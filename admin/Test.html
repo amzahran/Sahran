@@ -65,7 +65,7 @@
         <h2>Test Preview</h2>
         <div id="testDetails" class="test-details"></div>
         <div id="errorMessage" class="error-message" style="display: none;">
-            Test not found.
+            Test not found or no questions available.
         </div>
     </div>
 
@@ -96,10 +96,11 @@
                         `;
                     });
                     testDetails.innerHTML = questionsHTML;
+                    errorMessage.style.display = 'none';
                 } else {
-                    testDetails.innerHTML = '<p>No questions available for this test.</p>';
+                    testDetails.innerHTML = '';
+                    errorMessage.style.display = 'block';
                 }
-                errorMessage.style.display = 'none';
             } else {
                 testDetails.innerHTML = '';
                 errorMessage.style.display = 'block';

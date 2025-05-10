@@ -135,6 +135,20 @@
                         ]
                     },
                     createdAt: new Date().toISOString()
+                },
+                'testWW': {
+                    type: 'act-i',
+                    name: 'TESTWW',
+                    data: {
+                        title: 'TESTWW',
+                        isPaid: false,
+                        description: 'No description available',
+                        questions: [
+                            { question: 'What is 1 + 1?', options: ['1', '2', '3'], correctAnswer: '2' },
+                            { question: 'What is the capital of Italy?', options: ['Rome', 'Madrid', 'Athens'], correctAnswer: 'Rome' }
+                        ]
+                    },
+                    createdAt: new Date('2025-10-05T17:39:26').toISOString()
                 }
             };
             localStorage.setItem('savedTests', JSON.stringify(sampleTests));
@@ -174,8 +188,8 @@
         }
 
         function checkAndRedirect(url) {
-            const fullUrl = `admin/${url}`; // Add admin/ to the path
-            window.location.href = fullUrl; // Redirect directly without fetch
+            const fullUrl = `admin/${url}`; // Ensure the correct path
+            window.location.href = fullUrl; // Direct redirect
         }
 
         function deleteTest(testId) {
