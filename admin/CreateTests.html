@@ -637,40 +637,6 @@
                     var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
                     var firstSheetName = workbook.SheetNames[0];
                     var worksheet = workbook.Sheets[firstSheetName];
-
-                    var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                    var filteredData = jsonData.filter(row => row.some(filledCell));
-                    var headerRowIndex = filteredData.findIndex((row, index) =>
-                        row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                    );
-                    if (headerRowIndex === -1 || headerRowIndex > 25) {
-                        headerRowIndex = 0;
-                    }
-                    var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex));
-                    csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                    return csv;
-                } catch (e) {
-                    console.error('Error processing XLSX file:', e);
-                    return "";
-                }
-            }
-            return gk_fileData[filename] || "";
-        }
-    </script>
-
-    <script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-            return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-            if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-                try {
-                    var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                    var firstSheetName = workbook.SheetNames[0];
-                    var worksheet = workbook.Sheets[firstSheetName];
                     var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
                     var filteredData = jsonData.filter(row => row.some(filledCell));
                     var headerRowIndex = filteredData.findIndex((row, index) =>
@@ -704,7 +670,7 @@
         let editTestId = null;
 
         function showQuiz(type) {
-            console.log('showQuiz called with type:', type); // Debugging
+            console.log('showQuiz called with type:', type);
             currentType = type;
             const quizSection = document.getElementById('quizSection');
             const quizTitle = document.getElementById('quizTitle');
@@ -714,14 +680,14 @@
             }
             quizSection.classList.add('active');
             updateQuizTitle();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
 
             const urlParams = new URLSearchParams(window.location.search);
             editTestId = urlParams.get('id');
             if (editTestId) {
-                document.getElementById('quizTitle').textContent = 'Edit Test';
+                console.log('Editing test with ID:', editTestId);
                 loadTestForEdit(editTestId);
             }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function hideQuiz() {
@@ -749,34 +715,45 @@
                 'univ-course': 'Create University Course Test'
             };
             const quizTitle = document.getElementById('quizTitle');
-            if (!editTestId && quizTitle) {
-                quizTitle.textContent = titles[currentType] || 'Create Test';
+            if (quizTitle) {
+                if (editTestId) {
+                    quizTitle.textContent = 'Edit Test';
+                } else {
+                    quizTitle.textContent = titles[currentType] || 'Create Test';
+                }
             }
         }
 
         function loadTestForEdit(testId) {
+            console.log('Loading test for edit with ID:', testId);
             const savedTests = JSON.parse(localStorage.getItem('savedTests')) || {};
             const test = savedTests[testId];
-            if (!test) return;
+            if (!test) {
+                console.error('Test not found in localStorage for ID:', testId);
+                alert('Test not found. Please create a new test.');
+                return;
+            }
 
             document.getElementById('testTitle').value = test.data.title || 'Untitled Test';
-            document.getElementById('section1Questions').value = test.data.sections[0].questions.length;
-            document.getElementById('section1Duration').value = test.data.sections[0].duration;
-            document.getElementById('section2Questions').value = test.data.sections[1].questions.length;
-            document.getElementById('section2Duration').value = test.data.sections[1].duration;
-            document.getElementById('breakDuration').value = test.data.breakDuration;
+            document.getElementById('section1Questions').value = test.data.sections[0]?.questions?.length || 5;
+            document.getElementById('section1Duration').value = test.data.sections[0]?.duration || 30;
+            document.getElementById('section2Questions').value = test.data.sections[1]?.questions?.length || 5;
+            document.getElementById('section2Duration').value = test.data.sections[1]?.duration || 30;
+            document.getElementById('breakDuration').value = test.data.breakDuration || 10;
             document.getElementById('testType').value = test.data.isPaid ? 'paid' : 'free';
 
             document.getElementById('questionsContainer').innerHTML = '';
             test.data.sections.forEach((section, sectionIndex) => {
-                section.questions.forEach((question, qIndex) => {
-                    const totalIndex = sectionIndex === 0 ? qIndex + 1 : qIndex + 1 + test.data.sections[0].questions.length;
-                    addQuestion(totalIndex, sectionIndex + 1, question);
-                });
+                if (section && section.questions) {
+                    section.questions.forEach((question, qIndex) => {
+                        const totalIndex = sectionIndex === 0 ? qIndex + 1 : qIndex + 1 + (test.data.sections[0]?.questions?.length || 0);
+                        addQuestion(totalIndex, sectionIndex + 1, question);
+                    });
+                }
             });
 
-            questionCountSection1 = test.data.sections[0].questions.length;
-            questionCountSection2 = test.data.sections[1].questions.length;
+            questionCountSection1 = test.data.sections[0]?.questions?.length || 0;
+            questionCountSection2 = test.data.sections[1]?.questions?.length || 0;
         }
 
         document.getElementById('addQuestionBtn').addEventListener('click', function () {
