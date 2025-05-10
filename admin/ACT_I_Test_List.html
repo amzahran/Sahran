@@ -37,8 +37,7 @@
         }
         return gk_fileData[filename] || "";
         }
-        </script>```html
-<!DOCTYPE html>
+        </script><!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -137,12 +136,17 @@
     </div>
 
     <script>
+        // Initialize test type from URL parameters
         const urlParams = new URLSearchParams(window.location.search);
         const testType = urlParams.get('type') || 'act-i';
+
+        // Load tests on page load
         loadTests();
 
+        // Function to load tests from localStorage and display them in the table
         function loadTests() {
             const savedTests = JSON.parse(localStorage.getItem('savedTests')) || {};
+            console.log('Loaded tests:', savedTests); // Debugging
             const testList = document.getElementById('testList');
             testList.innerHTML = '';
 
@@ -155,10 +159,8 @@
                         <td>${test.data.isPaid ? 'Paid' : 'Free'}</td>
                         <td class="center-text">${new Date(test.createdAt).toLocaleString()}</td>
                         <td class="center-text">
-                            <!-- Adjusted path assuming CreateTests1.html is in 'pages' subdirectory -->
-                            <!-- If CreateTests1.html is in a different location, adjust the path accordingly -->
-                            <button onclick="checkAndRedirect('pages/CreateTests1.html?type=act-i&id=${testId}')">Edit</button>
-                            <button class="preview-btn" onclick="window.location.href='Test.html?id=${testId}'">Preview</button>
+                            <button onclick="checkAndRedirect('./CreateTests.html?type=act-i&id=${testId}')">Edit</button>
+                            <button class="preview-btn" onclick="window.location.href='./Test.html?id=${testId}'">Preview</button>
                             <button class="delete-btn" onclick="deleteTest('${testId}')">Delete</button>
                         </td>
                     `;
@@ -167,36 +169,22 @@
             });
         }
 
+        // Function to redirect to the specified URL
         function checkAndRedirect(url) {
-            console.log('Attempting to access URL:', url);
-            if (window.location.protocol === 'file:') {
-                console.warn('Running on file:// protocol. This may cause issues with fetch. Consider using a local server (e.g., Live Server or XAMPP).');
-            }
-            fetch(url, { method: 'HEAD' })
-                .then(response => {
-                    console.log('Fetch response:', response);
-                    if (response.ok) {
-                        console.log('File found, redirecting to:', url);
-                        window.location.href = url;
-                    } else {
-                        alert(`The edit page could not be accessed. Status: ${response.status} (${response.statusText}). Please ensure the file "CreateTests1.html" exists in the correct location (e.g., 'pages/CreateTests1.html'). If running locally, try using a local server (e.g., Live Server or XAMPP).`);
-                    }
-                })
-                .catch(error => {
-                    alert('An error occurred while accessing the edit page. Error: ' + error.message + '. If you are running this file locally (file://), please use a local server (e.g., Live Server or XAMPP).');
-                    console.error('Fetch error:', error);
-                });
+            console.log('Redirecting to:', url); // Debugging
+            window.location.href = url;
         }
 
+        // Function to delete a test from localStorage
         function deleteTest(testId) {
             if (confirm('Are you sure you want to delete this test?')) {
                 const savedTests = JSON.parse(localStorage.getItem('savedTests')) || {};
                 delete savedTests[testId];
                 localStorage.setItem('savedTests', JSON.stringify(savedTests));
+                console.log('Test deleted:', testId); // Debugging
                 loadTests();
             }
         }
     </script>
 </body>
 </html>
-```
