@@ -155,10 +155,10 @@
                         <td>${test.data.isPaid ? 'Paid' : 'Free'}</td>
                         <td class="center-text">${new Date(test.createdAt).toLocaleString()}</td>
                         <td class="center-text">
-                            <!-- Adjusted path assuming CreateTests1.html is in 'pages' subdirectory -->
-                            <!-- If CreateTests1.html is in a different location, adjust the path accordingly -->
-                            <button onclick="window.location.href='https://amzahran.github.io/Sahran/CreateTests.html?type=act-i&id=${testId}'">Edit</button>
-                            <button class="preview-btn" onclick="window.location.href='https://amzahran.github.io/Sahran/Test.html?id=${testId}'">Preview</button>
+                            <!-- Adjusted path assuming CreateTests.html is in 'pages' subdirectory -->
+                            <!-- If CreateTests.html is in a different location, adjust the path accordingly -->
+                            <button onclick="checkAndRedirect('pages/CreateTests.html?type=act-i&id=${testId}')">Edit</button>
+                            <button class="preview-btn" onclick="window.location.href='Test.html?id=${testId}'">Preview</button>
                             <button class="delete-btn" onclick="deleteTest('${testId}')">Delete</button>
                         </td>
                     `;
@@ -179,7 +179,7 @@
                         console.log('File found, redirecting to:', url);
                         window.location.href = url;
                     } else {
-                        alert(`The edit page could not be accessed. Status: ${response.status} (${response.statusText}). Please ensure the file "CreateTests1.html" exists in the correct location (e.g., 'pages/CreateTests1.html'). If running locally, try using a local server (e.g., Live Server or XAMPP).`);
+                        alert(`The edit page could not be accessed. Status: ${response.status} (${response.statusText}). Please ensure the file "CreateTests.html" exists in the correct location (e.g., 'pages/CreateTests.html'). If running locally, try using a local server (e.g., Live Server or XAMPP).`);
                     }
                 })
                 .catch(error => {
