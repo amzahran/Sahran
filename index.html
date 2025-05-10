@@ -309,16 +309,16 @@
 <div id="satI-tests"></div>
 </div>
 </div>
-<a href="University_Courses_Test_List_PREVIEW.html" target="_blank">Univ Courses</a>
+<a href="UCourses.html" target="_blank">Univ Courses</a>
 <div class="dropdown">
 <a class="dropdown-toggle" onclick="toggleDropdown(this)">Tests ▼</a>
 <div class="dropdown-content" id="testsDropdownContent">
-<a href="ACT_I_Test_List_Preview.html" target="_blank">ACT I</a>
-<a href="ACT_II_Test_List_Preview.html" target="_blank">ACT II</a>
-<a href="EST_I_Test_List_Preview.html" target="_blank">EST I</a>
-<a href="EST_II_Test_List_Preview.html" target="_blank">EST II</a>
-<a href="Digital_SAT_Test_List_PREVIEW.html" target="_blank">Digital SAT</a>
-<a href="University_Courses_Test_List_PREVIEW.html" target="_blank">University Courses</a>
+<a href="ACT I.html" target="_blank">ACT I</a>
+<a href="ACT II.html" target="_blank">ACT II</a>
+<a href="EST I.html" target="_blank">EST I</a>
+<a href="EST II.html" target="_blank">EST II</a>
+<a href="DSAT.html" target="_blank">Digital SAT</a>
+<a href="UCourses.html" target="_blank">University Courses</a>
 </div>
 </div>
 <a href="#">Book Shop</a>
@@ -362,17 +362,17 @@
 </div>
 </div>
 <div class="nav-item">
-<a href="University_Courses_Test_List_PREVIEW.html" target="_blank">Univ Courses</a>
+<a href="UCourses.html" target="_blank">Univ Courses</a>
 </div>
 <div class="nav-item">
 <a href="#">Tests ▼</a>
 <div class="dropdown-content" id="navTestsDropdownContent">
-<a href="ACT_I_Test_List_Preview.html" target="_blank">ACT I</a>
-<a href="ACT_II_Test_List_Preview.html" target="_blank">ACT II</a>
-<a href="EST_I_Test_List_Preview.html" target="_blank">EST I</a>
-<a href="EST_II_Test_List_Preview.html" target="_blank">EST II</a>
-<a href="Digital_SAT_Test_List_PREVIEW.html" target="_blank">Digital SAT</a>
-<a href="University_Courses_Test_List_PREVIEW.html" target="_blank">University Courses</a>
+<a href="ACT I.html" target="_blank">ACT I</a>
+<a href="ACT II.html" target="_blank">ACT II</a>
+<a href="EST I.html" target="_blank">EST I</a>
+<a href="EST II.html" target="_blank">EST II</a>
+<a href="DSAT.html" target="_blank">Digital SAT</a>
+<a href="UCourses.html" target="_blank">University Courses</a>
 </div>
 </div>
 <a href="#">Book Shop</a>
@@ -471,12 +471,12 @@
       const sidebarTests = document.getElementById('testsDropdownContent');
       const navTests = document.getElementById('navTestsDropdownContent');
       const originalTestsContent = `
-        <a href="ACT_I_Test_List_Preview.html" target="_blank">ACT I</a>
-        <a href="ACT_II_Test_List_Preview.html" target="_blank">ACT II</a>
-        <a href="EST_I_Test_List_Preview.html" target="_blank">EST I</a>
-        <a href="EST_II_Test_List_Preview.html" target="_blank">EST II</a>
-        <a href="Digital_SAT_Test_List_PREVIEW.html" target="_blank">Digital SAT</a>
-        <a href="University_Courses_Test_List_PREVIEW.html" target="_blank">University Courses</a>
+        <a href="ACT I.html" target="_blank">ACT I</a>
+        <a href="ACT II.html" target="_blank">ACT II</a>
+        <a href="EST I.html" target="_blank">EST I</a>
+        <a href="EST II.html" target="_blank">EST II</a>
+        <a href="DSAT.html" target="_blank">Digital SAT</a>
+        <a href="UCourses.html" target="_blank">University Courses</a>
       `;
       if (sidebarTests && !sidebarTests.innerHTML.trim()) {
         sidebarTests.innerHTML = originalTestsContent;
@@ -496,11 +496,11 @@
             if (content) {
               const link = document.createElement('a');
               let previewPage = {
-                'act-i': 'ACT_I_Test_List_Preview.html',
-                'act-ii': 'ACT_II_Test_List_Preview.html',
-                'est-i': 'EST_I_Test_List_Preview.html',
-                'est-ii': 'EST_II_Test_List_Preview.html',
-                'digital-sat': 'Digital_SAT_Test_List_PREVIEW.html'
+                'act-i': 'ACT I.html',
+                'act-ii': 'ACT II.html',
+                'est-i': 'EST I.html',
+                'est-ii': 'EST II.html',
+                'digital-sat': 'DSAT.html'
               }[test.type] || 'Test.html';
               link.href = `${previewPage}?id=${testId}`;
               link.target = '_blank';
