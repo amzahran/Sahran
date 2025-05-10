@@ -111,13 +111,29 @@
                 'test1': {
                     type: 'act-i',
                     name: 'Sample ACT I Test',
-                    data: { title: 'Sample ACT I Test', isPaid: false, description: 'This is a sample test for ACT I.' },
+                    data: {
+                        title: 'Sample ACT I Test',
+                        isPaid: false,
+                        description: 'This is a sample test for ACT I.',
+                        questions: [
+                            { question: 'What is 2 + 2?', options: ['3', '4', '5'], correctAnswer: '4' },
+                            { question: 'What is the capital of France?', options: ['Paris', 'London', 'Berlin'], correctAnswer: 'Paris' }
+                        ]
+                    },
                     createdAt: new Date().toISOString()
                 },
                 'test2': {
                     type: 'act-i',
                     name: 'Paid ACT I Test',
-                    data: { title: 'Paid ACT I Test', isPaid: true, description: 'This is a paid test for ACT I.' },
+                    data: {
+                        title: 'Paid ACT I Test',
+                        isPaid: true,
+                        description: 'This is a paid test for ACT I.',
+                        questions: [
+                            { question: 'What is 5 x 3?', options: ['15', '12', '18'], correctAnswer: '15' },
+                            { question: 'What is the largest planet?', options: ['Earth', 'Jupiter', 'Mars'], correctAnswer: 'Jupiter' }
+                        ]
+                    },
                     createdAt: new Date().toISOString()
                 }
             };
@@ -164,7 +180,7 @@
                     if (response.ok) {
                         window.location.href = fullUrl;
                     } else {
-                        alert(`The edit page could not be accessed. Status: ${response.status} (${response.statusText}). Please ensure the file "CreateTests.html" exists in the admin folder.`);
+                        alert(`The edit page could not be accessed. Status: ${response.status} (${response.statusText}). Please ensure the file "CreateTests.html" exists in the admin folder and the name matches exactly (case-sensitive).`);
                     }
                 })
                 .catch(error => {

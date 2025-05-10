@@ -29,8 +29,20 @@
         .test-details {
             margin-bottom: 20px;
         }
-        .test-details p {
-            margin: 10px 0;
+        .question {
+            margin-bottom: 15px;
+        }
+        .question p {
+            font-weight: bold;
+            color: #34495e;
+            margin-bottom: 5px;
+        }
+        .options {
+            margin-left: 20px;
+        }
+        .options label {
+            display: block;
+            margin: 5px 0;
             color: #34495e;
         }
         .back-btn {
@@ -69,13 +81,24 @@
 
             if (testId && savedTests[testId]) {
                 const test = savedTests[testId];
-                testDetails.innerHTML = `
-                    <p><strong>Test Name:</strong> ${test.name || test.data?.title || 'Unnamed Test'}</p>
-                    <p><strong>Type:</strong> ${test.type || 'Unknown'}</p>
-                    <p><strong>Free/Paid:</strong> ${test.data?.isPaid ? 'Paid' : 'Free'}</p>
-                    <p><strong>Created At:</strong> ${new Date(test.createdAt).toLocaleString()}</p>
-                    <p><strong>Description:</strong> ${test.data?.description || 'No description available'}</p>
-                `;
+                const questions = test.data?.questions || [];
+
+                if (questions.length > 0) {
+                    let questionsHTML = '';
+                    questions.forEach((q, index) => {
+                        questionsHTML += `
+                            <div class="question">
+                                <p>${index + 1}. ${q.question}</p>
+                                <div class="options">
+                                    ${q.options.map(opt => `<label><input type="radio" name="question${index}" value="${opt}" disabled> ${opt}</label>`).join('')}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    testDetails.innerHTML = questionsHTML;
+                } else {
+                    testDetails.innerHTML = '<p>No questions available for this test.</p>';
+                }
                 errorMessage.style.display = 'none';
             } else {
                 testDetails.innerHTML = '';
