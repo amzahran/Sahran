@@ -135,20 +135,6 @@
                         ]
                     },
                     createdAt: new Date().toISOString()
-                },
-                'testWW': {
-                    type: 'act-i',
-                    name: 'TESTWW',
-                    data: {
-                        title: 'TESTWW',
-                        isPaid: false,
-                        description: 'No description available',
-                        questions: [
-                            { question: 'What is 1 + 1?', options: ['1', '2', '3'], correctAnswer: '2' },
-                            { question: 'What is the capital of Italy?', options: ['Rome', 'Madrid', 'Athens'], correctAnswer: 'Rome' }
-                        ]
-                    },
-                    createdAt: new Date('2025-10-05T17:39:26').toISOString()
                 }
             };
             localStorage.setItem('savedTests', JSON.stringify(sampleTests));
@@ -175,8 +161,8 @@
                         <td>${test.data?.isPaid ? 'Paid' : 'Free'}</td>
                         <td class="center-text">${new Date(test.createdAt).toLocaleString()}</td>
                         <td class="center-text">
-                            <button onclick="checkAndRedirect('CreateTests.html?type=act-i&id=${testId}')">Edit</button>
-                            <button class="preview-btn" onclick="window.location.href='Test.html?id=${testId}'">Preview</button>
+                            <button onclick="window.location.href='admin/CreateTests.html?type=act-i&id=${testId}'">Edit</button>
+                            <button class="preview-btn" onclick="window.location.href='admin/Test.html?id=${testId}'">Preview</button>
                             <button class="delete-btn" onclick="deleteTest('${testId}')">Delete</button>
                         </td>
                     `;
@@ -188,8 +174,8 @@
         }
 
         function checkAndRedirect(url) {
-            const fullUrl = `admin/${url}`; // Ensure the correct path
-            window.location.href = fullUrl; // Direct redirect
+            const fullUrl = `admin/${url}`; // Add admin/ to the path
+            window.location.href = fullUrl; // Redirect directly without fetch
         }
 
         function deleteTest(testId) {
