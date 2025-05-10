@@ -175,18 +175,7 @@
 
         function checkAndRedirect(url) {
             const fullUrl = `admin/${url}`; // Add admin/ to the path
-            fetch(fullUrl, { method: 'HEAD' })
-                .then(response => {
-                    if (response.ok) {
-                        window.location.href = fullUrl;
-                    } else {
-                        alert(`The edit page could not be accessed. Status: ${response.status} (${response.statusText}). Please ensure the file "CreateTests.html" exists in the admin folder and the name matches exactly (case-sensitive).`);
-                    }
-                })
-                .catch(error => {
-                    alert('An error occurred while accessing the edit page. Error: ' + error.message + '.');
-                    console.error('Fetch error:', error);
-                });
+            window.location.href = fullUrl; // Redirect directly without fetch
         }
 
         function deleteTest(testId) {
