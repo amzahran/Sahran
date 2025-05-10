@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -45,15 +46,9 @@
       margin-top: 15px;
       font-family: Tahoma;
     }
-    button:hover {
-      background-color: #2980b9;
-    }
     .register-btn {
       background-color: #2ecc71;
       margin-top: 10px;
-    }
-    .register-btn:hover {
-      background-color: #27ae60;
     }
     .error {
       color: red;
@@ -69,7 +64,7 @@
     <input type="password" id="password" placeholder="Password">
     <div class="error" id="error-msg"></div>
     <button onclick="login()">Login</button>
-    <button class="register-btn" onclick="window.location.href='register.html'">Register New Account</button>
+    <button class="register-btn" onclick="window.location.href='register_updated.html'">Register New Account</button>
   </div>
 
   <script>
@@ -81,19 +76,15 @@
       if (user === "admin" && pass === "1234") {
         localStorage.setItem('loggedInAs', 'admin');
         window.location.href = "admin/index.html";
-      } 
-      else if (user === "teacher" && pass === "5678") {
-        localStorage.setItem('loggedInAs', 'teacher');
-        window.location.href = "teacher/index.html";
-      }
-      else {
-        // Check registered users
-        const registeredUsers = JSON.parse(localStorage.getItem('registeredStudents') || '[]');
-        const foundUser = registeredUsers.find(u => u.username === user && u.password === pass);
-        
+      } else {
+        const users = JSON.parse(localStorage.getItem("registeredStudents") || "[]");
+        const foundUser = users.find(u => u.username === user && u.password === pass);
         if (foundUser) {
           localStorage.setItem('loggedInAs', 'student');
           localStorage.setItem('userGrade', foundUser.grade);
+          localStorage.setItem('userName', foundUser.name);
+          localStorage.setItem('userEmail', foundUser.email);
+          localStorage.setItem('userMobile', foundUser.mobile);
           window.location.href = "student/index.html";
         } else {
           errorMsg.textContent = "Invalid username or password!";
@@ -101,11 +92,8 @@
       }
     }
 
-    // Login on Enter key press
     document.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        login();
-      }
+      if (e.key === 'Enter') login();
     });
   </script>
 </body>
