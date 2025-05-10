@@ -148,7 +148,7 @@
 
             Object.keys(savedTests).forEach(testId => {
                 const test = savedTests[testId];
-                if (test.type === testType) {
+                if (!testType || test.type === testType) {
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>${test.name || test.data.title || 'Unnamed Test'}</td>
