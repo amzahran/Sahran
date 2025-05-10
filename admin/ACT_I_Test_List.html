@@ -37,11 +37,12 @@
         }
         return gk_fileData[filename] || "";
         }
-        </script><!DOCTYPE html>
+        </script>```html
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ACT I Test List</title>
     <style>
         * {
@@ -50,171 +51,152 @@
             box-sizing: border-box;
             font-family: Arial, sans-serif;
         }
-
         body {
             background-color: #f5f5f5;
-            padding: 20px;
         }
-
         .container {
             max-width: 1000px;
-            margin: 0 auto;
-            background-color: white;
+            margin: 20px auto;
             padding: 20px;
+            background-color: white;
             border-radius: 8px;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-
-        .back-link {
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .delete-btn {
+            background-color: #e74c3c;
+        }
+        .delete-btn:hover {
+            background-color: #c0392b;
+        }
+        .preview-btn {
+            background-color: #f1c40f;
+        }
+        .preview-btn:hover {
+            background-color: #d4ac0d;
+        }
+        .back-btn {
             display: inline-block;
             margin-bottom: 20px;
             color: #3498db;
             text-decoration: none;
-        }
-
-        h1 {
-            color: #2c3e50;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .test-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .test-table th,
-        .test-table td {
-            padding: 10px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-
-        .test-table th {
-            background-color: #3498db;
-            color: white;
-        }
-
-        .test-table td {
-            color: #7f8c8d;
-        }
-
-        .test-actions button {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
             cursor: pointer;
-            margin-right: 5px;
-            transition: background-color 0.3s ease;
         }
-
-        .test-actions button:hover {
-            background-color: #2980b9;
-        }
-
-        .delete-btn {
-            background-color: #e74c3c;
-        }
-
-        .delete-btn:hover {
-            background-color: #c0392b;
+        .center-text {
+            text-align: center;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <a href="#" class="back-link">← Back</a>
-        <h1>ACT I Test List</h1>
-        <table class="test-table" id="testList">
+        <a href="javascript:history.back()" class="back-btn">← Back</a>
+        <h2>ACT I Test List</h2>
+        <table id="testTable">
             <thead>
                 <tr>
                     <th>Test Name</th>
                     <th>Free/Paid</th>
-                    <th>Created At</th>
-                    <th>Actions</th>
+                    <th class="center-text">Created At</th>
+                    <th class="center-text">Actions</th>
                 </tr>
             </thead>
-            <tbody></tbody>
+            <tbody id="testList"></tbody>
         </table>
     </div>
 
     <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const testType = urlParams.get('type') || 'act-i';
+        loadTests();
+
         function loadTests() {
-            const testListBody = document.querySelector('#testList tbody');
-            testListBody.innerHTML = '';
+            const savedTests = JSON.parse(localStorage.getItem('savedTests')) || {};
+            const testList = document.getElementById('testList');
+            testList.innerHTML = '';
 
-            const tests = JSON.parse(localStorage.getItem('savedTests')) || {};
-            const filteredTests = Object.entries(tests)
-                .filter(([_, test]) => test.type === 'act-i')
-                .sort((a, b) => new Date(b[1].createdAt) - new Date(a[1].createdAt));
-
-            if (filteredTests.length === 0) {
-                testListBody.innerHTML = '<tr><td colspan="4">No tests available. Create a new test to get started!</td></tr>';
-                return;
-            }
-
-            filteredTests.forEach(([testId, test]) => {
-                const createdDate = new Date(test.createdAt);
-                const formattedDate = createdDate.toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${test.data.title || 'Untitled Test'}</td>
-                    <td>${test.data.isPaid ? 'Paid' : 'Free'}</td>
-                    <td>${formattedDate}</td>
-                    <td class="test-actions">
-                        <button onclick="previewTest('${testId}')">Preview</button>
-                        <button onclick="editTest('${testId}')">Edit</button>
-                        <button class="delete-btn" onclick="deleteTest('${testId}')">Delete</button>
-                    </td>
-                `;
-                testListBody.appendChild(row);
+            Object.keys(savedTests).forEach(testId => {
+                const test = savedTests[testId];
+                if (test.type === testType) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${test.name || test.data.title || 'Unnamed Test'}</td>
+                        <td>${test.data.isPaid ? 'Paid' : 'Free'}</td>
+                        <td class="center-text">${new Date(test.createdAt).toLocaleString()}</td>
+                        <td class="center-text">
+                            <!-- Adjusted path assuming CreateTests1.html is in 'pages' subdirectory -->
+                            <!-- If CreateTests1.html is in a different location, adjust the path accordingly -->
+                            <button onclick="window.location.href='https://amzahran.github.io/Sahran/CreateTests.html?type=act-i&id=${testId}'">Edit</button>
+                            <button class="preview-btn" onclick="window.location.href='https://amzahran.github.io/Sahran/Test.html?id=${testId}'">Preview</button>
+                            <button class="delete-btn" onclick="deleteTest('${testId}')">Delete</button>
+                        </td>
+                    `;
+                    testList.appendChild(row);
+                }
             });
         }
 
-        function previewTest(testId) {
-            const tests = JSON.parse(localStorage.getItem('savedTests')) || {};
-            const test = tests[testId];
-            if (!test || !test.data || !test.data.sections) {
-                alert('Unable to preview test: Test data is incomplete or missing.');
-                return;
+        function checkAndRedirect(url) {
+            console.log('Attempting to access URL:', url);
+            if (window.location.protocol === 'file:') {
+                console.warn('Running on file:// protocol. This may cause issues with fetch. Consider using a local server (e.g., Live Server or XAMPP).');
             }
-            const totalQuestions = (test.data.sections[0]?.questions?.length || 0) + (test.data.sections[1]?.questions?.length || 0);
-            if (totalQuestions === 0) {
-                alert('No questions available to preview.');
-                return;
-            }
-            const previewWindow = window.open('', '_blank');
-            previewWindow.document.write(`
-                <html><head><title>Test Preview</title><style>body {font-family: Arial; padding: 20px; background: #f5f5f5;} .preview-container {max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1);} h1, h3 {color: #2c3e50;} .question {margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background: #f9f9f9;}</style></head><body><div class="preview-container"><h1>${test.data.title || 'Untitled Test'}</h1></div></body></html>
-            `);
-            previewWindow.document.close();
-        }
-
-        function editTest(testId) {
-            window.location.href = `CreateTests.html?type=act-i&id=${testId}`;
+            fetch(url, { method: 'HEAD' })
+                .then(response => {
+                    console.log('Fetch response:', response);
+                    if (response.ok) {
+                        console.log('File found, redirecting to:', url);
+                        window.location.href = url;
+                    } else {
+                        alert(`The edit page could not be accessed. Status: ${response.status} (${response.statusText}). Please ensure the file "CreateTests1.html" exists in the correct location (e.g., 'pages/CreateTests1.html'). If running locally, try using a local server (e.g., Live Server or XAMPP).`);
+                    }
+                })
+                .catch(error => {
+                    alert('An error occurred while accessing the edit page. Error: ' + error.message + '. If you are running this file locally (file://), please use a local server (e.g., Live Server or XAMPP).');
+                    console.error('Fetch error:', error);
+                });
         }
 
         function deleteTest(testId) {
             if (confirm('Are you sure you want to delete this test?')) {
-                const tests = JSON.parse(localStorage.getItem('savedTests')) || {};
-                delete tests[testId];
-                localStorage.setItem('savedTests', JSON.stringify(tests));
+                const savedTests = JSON.parse(localStorage.getItem('savedTests')) || {};
+                delete savedTests[testId];
+                localStorage.setItem('savedTests', JSON.stringify(savedTests));
                 loadTests();
             }
         }
-
-        document.addEventListener('DOMContentLoaded', function () {
-            loadTests();
-        });
     </script>
 </body>
 </html>
+```

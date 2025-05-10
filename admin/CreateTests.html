@@ -37,6 +37,45 @@
         }
         return gk_fileData[filename] || "";
         }
+        </script><script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
         </script><!DOCTYPE html>
 <html lang="en">
 <head>
@@ -463,7 +502,6 @@
             margin-bottom: 20px;
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
         MathJax = {
             tex: {inlineMath: [['$', '$'], ['\\(', '\\)']]}
@@ -489,7 +527,7 @@
     </div>
     <div class="quiz-section" id="quizSection">
         <div class="quiz-container">
-            <a href="./ACT_I_Test_List.html?type=act-i" class="back-btn">← Back to Test List</a>
+            <div class="back-btn" onclick="hideQuiz()">← Back to Test Selection</div>
             <h1 id="quizTitle">Create Test</h1>
             <div id="quizBuilder">
                 <label for="testTitle">Test Title:</label>
@@ -623,39 +661,8 @@
         <h2>Section Break</h2>
         <p>Time remaining: <span id="breakTimer">10:00</span></p>
     </div>
-
-    <script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-            return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-            if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-                try {
-                    var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                    var firstSheetName = workbook.SheetNames[0];
-                    var worksheet = workbook.Sheets[firstSheetName];
-                    var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                    var filteredData = jsonData.filter(row => row.some(filledCell));
-                    var headerRowIndex = filteredData.findIndex((row, index) =>
-                        row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                    );
-                    if (headerRowIndex === -1 || headerRowIndex > 25) {
-                        headerRowIndex = 0;
-                    }
-                    var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex));
-                    csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                    return csv;
-                } catch (e) {
-                    console.error('Error processing XLSX file:', e);
-                    return "";
-                }
-            }
-            return gk_fileData[filename] || "";
-        }
-
+    <script>
+        // Global variables
         let currentType = '';
         let questionCountSection1 = 0;
         let questionCountSection2 = 0;
@@ -669,38 +676,25 @@
         let userAnswers = [];
         let editTestId = null;
 
+        // Show quiz section with dynamic title
         function showQuiz(type) {
-            console.log('showQuiz called with type:', type);
             currentType = type;
-            const quizSection = document.getElementById('quizSection');
-            const quizTitle = document.getElementById('quizTitle');
-            if (!quizSection || !quizTitle) {
-                console.error('quizSection or quizTitle not found in DOM');
-                return;
-            }
-            quizSection.classList.add('active');
+            document.getElementById('quizSection').classList.add('active');
             updateQuizTitle();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
 
             const urlParams = new URLSearchParams(window.location.search);
             editTestId = urlParams.get('id');
             if (editTestId) {
-                console.log('Editing test with ID:', editTestId);
+                document.getElementById('quizTitle').textContent = 'Edit Test';
                 loadTestForEdit(editTestId);
             }
-            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function hideQuiz() {
-            const quizSection = document.getElementById('quizSection');
-            const quizDisplaySection = document.getElementById('quizDisplaySection');
-            const quizBuilder = document.getElementById('quizBuilder');
-            if (!quizSection || !quizDisplaySection || !quizBuilder) {
-                console.error('One or more elements not found in DOM');
-                return;
-            }
-            quizSection.classList.remove('active');
-            quizDisplaySection.classList.remove('active');
-            quizBuilder.style.display = 'block';
+            document.getElementById('quizSection').classList.remove('active');
+            document.getElementById('quizDisplaySection').classList.remove('active');
+            document.getElementById('quizBuilder').style.display = 'block';
             window.scrollTo({ top: 0, behavior: 'smooth' });
             editTestId = null;
         }
@@ -714,48 +708,37 @@
                 'digital-sat': 'Create Digital SAT Test',
                 'univ-course': 'Create University Course Test'
             };
-            const quizTitle = document.getElementById('quizTitle');
-            if (quizTitle) {
-                if (editTestId) {
-                    quizTitle.textContent = 'Edit Test';
-                } else {
-                    quizTitle.textContent = titles[currentType] || 'Create Test';
-                }
+            if (!editTestId) {
+                document.getElementById('quizTitle').textContent = titles[currentType] || 'Create Test';
             }
         }
 
         function loadTestForEdit(testId) {
-            console.log('Loading test for edit with ID:', testId);
             const savedTests = JSON.parse(localStorage.getItem('savedTests')) || {};
             const test = savedTests[testId];
-            if (!test) {
-                console.error('Test not found in localStorage for ID:', testId);
-                alert('Test not found. Please create a new test.');
-                return;
-            }
+            if (!test) return;
 
             document.getElementById('testTitle').value = test.data.title || 'Untitled Test';
-            document.getElementById('section1Questions').value = test.data.sections[0]?.questions?.length || 5;
-            document.getElementById('section1Duration').value = test.data.sections[0]?.duration || 30;
-            document.getElementById('section2Questions').value = test.data.sections[1]?.questions?.length || 5;
-            document.getElementById('section2Duration').value = test.data.sections[1]?.duration || 30;
-            document.getElementById('breakDuration').value = test.data.breakDuration || 10;
+            document.getElementById('section1Questions').value = test.data.sections[0].questions.length;
+            document.getElementById('section1Duration').value = test.data.sections[0].duration;
+            document.getElementById('section2Questions').value = test.data.sections[1].questions.length;
+            document.getElementById('section2Duration').value = test.data.sections[1].duration;
+            document.getElementById('breakDuration').value = test.data.breakDuration;
             document.getElementById('testType').value = test.data.isPaid ? 'paid' : 'free';
 
             document.getElementById('questionsContainer').innerHTML = '';
             test.data.sections.forEach((section, sectionIndex) => {
-                if (section && section.questions) {
-                    section.questions.forEach((question, qIndex) => {
-                        const totalIndex = sectionIndex === 0 ? qIndex + 1 : qIndex + 1 + (test.data.sections[0]?.questions?.length || 0);
-                        addQuestion(totalIndex, sectionIndex + 1, question);
-                    });
-                }
+                section.questions.forEach((question, qIndex) => {
+                    const totalIndex = sectionIndex === 0 ? qIndex + 1 : qIndex + 1 + test.data.sections[0].questions.length;
+                    addQuestion(totalIndex, sectionIndex + 1, question);
+                });
             });
 
-            questionCountSection1 = test.data.sections[0]?.questions?.length || 0;
-            questionCountSection2 = test.data.sections[1]?.questions?.length || 0;
+            questionCountSection1 = test.data.sections[0].questions.length;
+            questionCountSection2 = test.data.sections[1].questions.length;
         }
 
+        // Add new question
         document.getElementById('addQuestionBtn').addEventListener('click', function () {
             const section1Questions = parseInt(document.getElementById('section1Questions').value);
             const section2Questions = parseInt(document.getElementById('section2Questions').value);
@@ -856,6 +839,7 @@
 
             questionsContainer.appendChild(questionDiv);
 
+            // Ensure question type selector works
             const questionTypeSelect = document.getElementById(`questionType${questionNum}`);
             questionTypeSelect.addEventListener('change', function () {
                 const type = this.value;
@@ -863,10 +847,12 @@
                 const shortAnswerOptions = document.getElementById(`shortAnswerOptions${questionNum}`);
                 const gridInOptions = document.getElementById(`gridInOptions${questionNum}`);
 
+                // Hide all options first
                 answerOptions.classList.add('hidden');
                 shortAnswerOptions.classList.add('hidden');
                 gridInOptions.classList.add('hidden');
 
+                // Show the selected option
                 if (type === 'multiple-choice') {
                     answerOptions.classList.remove('hidden');
                 } else if (type === 'short-answer') {
@@ -876,6 +862,7 @@
                 }
             });
 
+            // Attach remove question event listener
             const removeButton = questionDiv.querySelector('.remove-question');
             removeButton.addEventListener('click', function () {
                 const questionId = this.getAttribute('data-question-id');
@@ -900,7 +887,8 @@
         function updateQuestionNumbers() {
             const questions = document.querySelectorAll('.question-input');
             const section1Questions = parseInt(document.getElementById('section1Questions').value);
-
+            
+            // Update section counts
             questionCountSection1 = 0;
             questionCountSection2 = 0;
 
@@ -911,13 +899,14 @@
                 question.querySelector('h3').textContent = `Question ${questionNum} (Section ${section})`;
                 question.querySelector('.remove-question').setAttribute('data-question-id', `question-${questionNum}`);
 
+                // Update section counts
                 if (section === 1) {
                     questionCountSection1++;
                 } else {
                     questionCountSection2++;
                 }
 
-                const oldNum = index + 2;
+                const oldNum = index + 2; // Adjust based on previous numbering
                 ['questionType', 'questionText', 'questionImage', 'answerOptions', 'shortAnswerOptions', 'gridInOptions', 'correctShortAnswer', 'correctGridInAnswer'].forEach(field => {
                     const element = question.querySelector(`#${field}${oldNum}`);
                     if (element) {
@@ -936,6 +925,7 @@
             });
         }
 
+        // Save test
         document.getElementById('saveTestBtn').addEventListener('click', async function () {
             const testTitle = document.getElementById('testTitle').value.trim();
             if (!testTitle) {
@@ -1014,7 +1004,7 @@
             saveTest(currentType, testData, testId);
             alert('Test saved successfully!');
             editTestId = null;
-            window.location.href = `./ACT_I_Test_List.html?type=${currentType}`;
+            window.location.href = `ACT_I_Test_List.html?type=${currentType}`;
         });
 
         function readImageFile(file) {
@@ -1033,11 +1023,11 @@
                 data: testData,
                 createdAt: tests[testId]?.createdAt || new Date().toISOString()
             };
-            console.log('Saving test:', tests[testId]);
             localStorage.setItem('savedTests', JSON.stringify(tests));
             return testId;
         }
 
+        // Display quiz
         document.getElementById('displayQuizBtn').addEventListener('click', async function () {
             const section1Questions = parseInt(document.getElementById('section1Questions').value);
             const section2Questions = parseInt(document.getElementById('section2Questions').value);
@@ -1259,6 +1249,8 @@
         }
 
         document.getElementById('submitSection1Btn').addEventListener('click', submitSection1);
+        document.getElementById('submitSection2Btn').addEventListener('click', submitSection2);
+
         function submitSection1() {
             clearInterval(section1Timer);
             showResults(1);
@@ -1272,7 +1264,6 @@
             }
         }
 
-        document.getElementById('submitSection2Btn').addEventListener('click', submitSection2);
         function submitSection2() {
             clearInterval(section2Timer);
             showResults(2);
@@ -1342,46 +1333,50 @@
             document.getElementById('resultsSection2').classList.add('hidden');
         });
 
-        document.addEventListener('DOMContentLoaded', function () {
-            const urlParams = new URLSearchParams(window.location.search);
-            const type = urlParams.get('type');
-            if (type) {
-                showQuiz(type);
-            }
+        const urlParams = new URLSearchParams(window.location.search);
+        const type = urlParams.get('type');
+        if (type) {
+            showQuiz(type);
+        }
 
-            document.querySelectorAll('.remove-question').forEach(button => {
-                button.addEventListener('click', function () {
-                    const questionId = this.getAttribute('data-question-id');
-                    const questionElement = document.getElementById(questionId);
-                    if (questionElement) {
-                        questionElement.remove();
-                        updateQuestionNumbers();
-                    }
-                });
+        // Ensure the initial question's remove button is active
+        document.querySelectorAll('.remove-question').forEach(button => {
+            button.addEventListener('click', function () {
+                const questionId = this.getAttribute('data-question-id');
+                const questionElement = document.getElementById(questionId);
+                if (questionElement) {
+                    questionElement.remove();
+                    updateQuestionNumbers();
+                }
             });
-
-            const qTypeSelect = document.getElementById('questionType1');
-            if (qTypeSelect) {
-                qTypeSelect.addEventListener('change', function () {
-                    const type = this.value;
-                    const answerOptions = document.getElementById('answerOptions1');
-                    const shortAnswerOptions = document.getElementById('shortAnswerOptions1');
-                    const gridInOptions = document.getElementById('gridInOptions1');
-
-                    answerOptions.classList.add('hidden');
-                    shortAnswerOptions.classList.add('hidden');
-                    gridInOptions.classList.add('hidden');
-
-                    if (type === 'multiple-choice') {
-                        answerOptions.classList.remove('hidden');
-                    } else if (type === 'short-answer') {
-                        shortAnswerOptions.classList.remove('hidden');
-                    } else if (type === 'grid-in') {
-                        gridInOptions.classList.remove('hidden');
-                    }
-                });
-            }
         });
     </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93d32824bd89bcc5',t:'MTc0NjgxNDI2MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const qTypeSelect = document.getElementById('questionType1');
+    if (qTypeSelect) {
+        qTypeSelect.addEventListener('change', function () {
+            const type = this.value;
+            const answerOptions = document.getElementById('answerOptions1');
+            const shortAnswerOptions = document.getElementById('shortAnswerOptions1');
+            const gridInOptions = document.getElementById('gridInOptions1');
+
+            answerOptions.classList.add('hidden');
+            shortAnswerOptions.classList.add('hidden');
+            gridInOptions.classList.add('hidden');
+
+            if (type === 'multiple-choice') {
+                answerOptions.classList.remove('hidden');
+            } else if (type === 'short-answer') {
+                shortAnswerOptions.classList.remove('hidden');
+            } else if (type === 'grid-in') {
+                gridInOptions.classList.remove('hidden');
+            }
+        });
+    }
+});
+</script>
+
 </body>
 </html>
