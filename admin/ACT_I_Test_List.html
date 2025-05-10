@@ -156,12 +156,17 @@
                 if (!testType || test.type === testType) {
                     hasTests = true;
                     const row = document.createElement('tr');
+                    const testName = test.name || test.data?.title || 'Unnamed Test';
+                    const isPaid = test.data?.isPaid ? 'Paid' : 'Free';
+                    const createdAt = test.createdAt ? new Date(test.createdAt).toLocaleString() : 'N/A';
+                    const testType = test.type || '';
+
                     row.innerHTML = `
-                        <td>${test.name || test.data?.title || 'Unnamed Test'}</td>
-                        <td>${test.data?.isPaid ? 'Paid' : 'Free'}</td>
-                        <td class="center-text">${new Date(test.createdAt).toLocaleString()}</td>
+                        <td>${testName}</td>
+                        <td>${isPaid}</td>
+                        <td class="center-text">${createdAt}</td>
                         <td class="center-text">
-                            <button onclick="window.location.href='admin/CreateTests.html?type=act-i&id=${testId}'">Edit</button>
+                            <button onclick="window.location.href='admin/CreateTests.html?type=${testType}&id=${testId}'">Edit</button>
                             <button class="preview-btn" onclick="window.location.href='admin/Test.html?id=${testId}'">Preview</button>
                             <button class="delete-btn" onclick="deleteTest('${testId}')">Delete</button>
                         </td>
@@ -171,6 +176,7 @@
             });
 
             noTestsMessage.style.display = hasTests ? 'none' : 'block';
+        }
         }
 
         function checkAndRedirect(url) {
