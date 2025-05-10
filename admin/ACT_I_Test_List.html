@@ -108,14 +108,20 @@
 
             Object.keys(savedTests).forEach(testId => {
                 const test = savedTests[testId];
+                console.log('Loaded test:', testId, test);
+
                 if (!testType || test.type === testType) {
                     const row = document.createElement('tr');
+                    const testName = test.name || (test.data && test.data.title) || 'Unnamed Test';
+                    const isPaid = (test.data && test.data.isPaid) ? 'Paid' : 'Free';
+                    const createdAt = test.createdAt ? new Date(test.createdAt).toLocaleString() : 'N/A';
+
                     row.innerHTML = `
-                        <td>${test.name || test.data.title || 'Unnamed Test'}</td>
-                        <td>${test.data.isPaid ? 'Paid' : 'Free'}</td>
-                        <td class="center-text">${new Date(test.createdAt).toLocaleString()}</td>
+                        <td>${testName}</td>
+                        <td>${isPaid}</td>
+                        <td class="center-text">${createdAt}</td>
                         <td class="center-text">
-                            <button onclick="checkAndRedirect('CreateTests.html?type=act-i&id=${testId}')">Edit</button>
+                            <button onclick="checkAndRedirect('CreateTests.html?type=${test.type}&id=${testId}')">Edit</button>
                             <button class="preview-btn" onclick="window.location.href='Test.html?id=${testId}'">Preview</button>
                             <button class="delete-btn" onclick="deleteTest('${testId}')">Delete</button>
                         </td>
@@ -124,9 +130,12 @@
                 }
             });
         }
+            });
+        }
 
         function checkAndRedirect(url) {
-            fetch(url, { method: 'HEAD' })
+    window.location.href = url;
+})
                 .then(response => {
                     console.log('Fetch response:', response);
                     if (response.ok) {
