@@ -122,6 +122,24 @@
             background-color: #c0392b;
         }
     </style>
+</head>
+<body>
+    <div class="container">
+        <a href="#" class="back-link">← Back</a>
+        <h1>ACT I Test List</h1>
+        <table class="test-table" id="testList">
+            <thead>
+                <tr>
+                    <th>Test Name</th>
+                    <th>Free/Paid</th>
+                    <th>Created At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
     <script>
         function loadTests() {
             const testListBody = document.querySelector('#testList tbody');
@@ -198,22 +216,5 @@
             loadTests();
         });
     </script>
-</head>
-<body>
-    <div class="container">
-        <a href="#" class="back-link">← Back</a>
-        <h1>ACT I Test List</h1>
-        <table class="test-table" id="testList">
-            <thead>
-                <tr>
-                    <th>Test Name</th>
-                    <th>Free/Paid</th>
-                    <th>Created At</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
 </body>
 </html>
