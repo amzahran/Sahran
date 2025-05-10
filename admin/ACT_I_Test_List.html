@@ -161,7 +161,7 @@
                         <td>${test.data?.isPaid ? 'Paid' : 'Free'}</td>
                         <td class="center-text">${new Date(test.createdAt).toLocaleString()}</td>
                         <td class="center-text">
-                            <button onclick="window.location.href='CreateTests.html?type=act-i&id=${testId}'">Edit</button>
+                            <button onclick="checkAndRedirect('CreateTests.html?type=act-i&id=${testId}')">Edit</button>
                             <button class="preview-btn" onclick="window.location.href='Test.html?id=${testId}'">Preview</button>
                             <button class="delete-btn" onclick="deleteTest('${testId}')">Delete</button>
                         </td>
