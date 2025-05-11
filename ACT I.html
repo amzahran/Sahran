@@ -303,14 +303,18 @@
             }
             document.getElementById('testPreview').classList.add('show');
             document.getElementById('score').textContent = '';
-            document.querySelector('.submit-btn').style.display = test.data?.questions && test.data.questions.length > 0 ? 'inline-block' : 'none';
         }
     }
 
     function submitTest() {
         const savedTests = JSON.parse(localStorage.getItem('savedTests')) || {};
         const test = savedTests[currentTestId];
-        if (!test || !test.data?.questions) return;
+        if (!test) return;
+
+        if (!test.data?.questions || !Array.isArray(test.data.questions) || test.data.questions.length === 0) {
+            document.getElementById('score').textContent = 'Cannot submit: No questions available.';
+            return;
+        }
 
         let score = 0;
         const total = test.data.questions.length;
@@ -343,7 +347,6 @@
         document.getElementById('previewContent').innerHTML = '';
         document.getElementById('score').textContent = '';
         document.querySelector('.submit-btn').disabled = false;
-        document.querySelector('.submit-btn').style.display = 'inline-block';
         currentTestId = null;
     }
 
