@@ -206,6 +206,10 @@
         font-weight: bold;
         color: #2c3e50;
     }
+    .instruction {
+        color: #7f8c8d;
+        font-style: italic;
+    }
 </style>
 </head>
 <body>
@@ -292,10 +296,14 @@
                     previewContent.appendChild(questionDiv);
                 });
             } else {
-                previewContent.textContent = 'No questions available for this test.';
+                previewContent.innerHTML = `
+                    <p>No questions available for this test.</p>
+                    <p class="instruction">Please create or update this test with questions via the test creation page.</p>
+                `;
             }
             document.getElementById('testPreview').classList.add('show');
             document.getElementById('score').textContent = '';
+            document.querySelector('.submit-btn').style.display = test.data?.questions && test.data.questions.length > 0 ? 'inline-block' : 'none';
         }
     }
 
@@ -335,6 +343,7 @@
         document.getElementById('previewContent').innerHTML = '';
         document.getElementById('score').textContent = '';
         document.querySelector('.submit-btn').disabled = false;
+        document.querySelector('.submit-btn').style.display = 'inline-block';
         currentTestId = null;
     }
 
