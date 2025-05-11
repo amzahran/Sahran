@@ -271,7 +271,9 @@
             previewTitle.textContent = test.name || test.data?.title || 'Unnamed Test';
             previewContent.innerHTML = '';
 
-            if (test.data?.questions && Array.isArray(test.data.questions)) {
+            console.log('Test Data:', test); // Debug log to check test structure
+
+            if (test.data?.questions && Array.isArray(test.data.questions) && test.data.questions.length > 0) {
                 test.data.questions.forEach((q, index) => {
                     const questionDiv = document.createElement('div');
                     questionDiv.className = 'question';
