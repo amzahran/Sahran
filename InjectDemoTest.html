@@ -1,0 +1,41 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Inject Demo Test</title>
+</head>
+<body>
+  <h2>Injecting Demo ACT Test...</h2>
+  <script>
+    const demoTest = {
+      "act-i-demo": {
+        type: "act-i",
+        name: "Demo ACT Test",
+        createdAt: new Date().toISOString(),
+        data: {
+          isPaid: false,
+          questions: [
+            {
+              question: "What is 2 + 2?",
+              options: ["3", "4", "5"],
+              answer: "4"
+            },
+            {
+              question: "What is the capital of Egypt?",
+              options: ["Cairo", "Alexandria", "Giza"],
+              answer: "Cairo"
+            }
+          ]
+        }
+      }
+    };
+
+    const saved = JSON.parse(localStorage.getItem("savedTests")) || {};
+    saved["act-i-demo"] = demoTest["act-i-demo"];
+    localStorage.setItem("savedTests", JSON.stringify(saved));
+
+    alert("✅ Demo test has been injected! You can now go to ACT I and click Preview.");
+    window.location.href = "ACT I.html";
+  </script>
+</body>
+</html>
