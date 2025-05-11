@@ -210,6 +210,10 @@
         color: #7f8c8d;
         font-style: italic;
     }
+    .confirmation {
+        color: #2c3e50;
+        margin-top: 5px;
+    }
 </style>
 </head>
 <body>
@@ -309,7 +313,10 @@
     function submitTest() {
         const savedTests = JSON.parse(localStorage.getItem('savedTests')) || {};
         const test = savedTests[currentTestId];
-        if (!test) return;
+        if (!test) {
+            document.getElementById('score').textContent = 'Error: Test not found.';
+            return;
+        }
 
         if (!test.data?.questions || !Array.isArray(test.data.questions) || test.data.questions.length === 0) {
             document.getElementById('score').textContent = 'Cannot submit: No questions available.';
@@ -338,15 +345,34 @@
             }
         });
 
-        document.getElementById('score').textContent = `Score: ${score}/${total}`;
-        document.querySelector('.submit-btn').disabled = true;
+        // Display score and confirmation
+        document.getElementById('score').innerHTML = `
+            Score: ${score}/${total}<br>
+            <span class="confirmation">Submission recorded successfully!</span>
+        `;
+
+        // Save the score to localStorage
+        const userScores = JSON.parse(localStorage.getItem('userScores')) || {};
+        userScores[currentTestId] = {
+            testName: test.data?.title || 'Unnamed Test',
+            score: score,
+            total: total,
+            timestamp: new Date().getTime()
+        };
+        localStorage.setItem('userScores', JSON.stringify(userScores));
+
+        // Clear selections for resubmission
+        document.querySelectorAll('input[type="radio"]').forEach(input => input.checked = false);
+        test.data.questions.forEach((q, index) => {
+            document.getElementById(`feedback${index}`).textContent = '';
+        });
     }
 
     function resetPreview() {
         document.getElementById('testPreview').classList.remove('show');
         document.getElementById('previewContent').innerHTML = '';
         document.getElementById('score').textContent = '';
-        document.querySelector('.submit-btn').disabled = false;
+        document.querySelectorAll('input[type="radio"]').forEach(input => input.checked = false);
         currentTestId = null;
     }
 
