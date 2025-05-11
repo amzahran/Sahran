@@ -37,11 +37,51 @@
         }
         return gk_fileData[filename] || "";
         }
-        </script><!DOCTYPE html>
+        </script><script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+</script>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<title>ACT I.html Test List</title>
+<title>ACT I Test List</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <style>
     * {
@@ -107,6 +147,36 @@
     .center-text {
         text-align: center;
     }
+    #testPreview {
+        display: none;
+        margin-top: 20px;
+        padding: 20px;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    #testPreview.show {
+        display: block;
+    }
+    .question {
+        margin-bottom: 15px;
+    }
+    .options {
+        margin-left: 20px;
+        margin-top: 5px;
+    }
+    .close-btn {
+        background-color: #e74c3c;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        float: right;
+    }
+    .close-btn:hover {
+        background-color: #c0392b;
+    }
 </style>
 </head>
 <body>
@@ -124,6 +194,11 @@
 </thead>
 <tbody id="testList"></tbody>
 </table>
+<div id="testPreview">
+    <button class="close-btn" onclick="document.getElementById('testPreview').classList.remove('show')">Close</button>
+    <h3 id="previewTitle"></h3>
+    <div id="previewContent"></div>
+</div>
 </div>
 
 <script>
@@ -138,23 +213,50 @@
         Object.keys(savedTests).forEach(testId => {
             const test = savedTests[testId];
             if (test.type === testType) {
-                const isPaid = test.data?.isPaid || false; // Default to false if isPaid is undefined
+                const isPaid = test.data?.isPaid || false;
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${test.name || test.data?.title || 'Unnamed Test'}</td>
                     <td>${isPaid ? 'Paid' : 'Free'}</td>
                     <td class="center-text">${new Date(test.createdAt).toLocaleString()}</td>
                     <td class="center-text">
-                        <button class="preview-btn" onclick="window.location.href='Test.html?id=${testId}'" ${isPaid ? 'disabled' : ''}>Preview</button>
+                        <button class="preview-btn" onclick="showTest('${testId}')" ${isPaid ? 'disabled' : ''}>Preview</button>
                     </td>
                 `;
                 testList.appendChild(row);
             }
         });
     }
-</script>
 
-<script>
+    function showTest(testId) {
+        const savedTests = JSON.parse(localStorage.getItem('savedTests')) || {};
+        const test = savedTests[testId];
+        if (test && !test.data?.isPaid) {
+            const previewTitle = document.getElementById('previewTitle');
+            const previewContent = document.getElementById('previewContent');
+            previewTitle.textContent = test.name || test.data?.title || 'Unnamed Test';
+            previewContent.innerHTML = '';
+
+            if (test.data?.questions && Array.isArray(test.data.questions)) {
+                test.data.questions.forEach((q, index) => {
+                    const questionDiv = document.createElement('div');
+                    questionDiv.className = 'question';
+                    questionDiv.innerHTML = `
+                        <p><strong>Question ${index + 1}:</strong> ${q.question}</p>
+                        <div class="options">
+                            ${q.options ? q.options.map((opt, i) => `<p>${String.fromCharCode(97 + i)}. ${opt}</p>`).join('') : ''}
+                            ${q.answer ? `<p><strong>Answer:</strong> ${q.answer}</p>` : ''}
+                        </div>
+                    `;
+                    previewContent.appendChild(questionDiv);
+                });
+            } else {
+                previewContent.textContent = 'No questions available for this test.';
+            }
+            document.getElementById('testPreview').classList.add('show');
+        }
+    }
+
     // Override preview button behavior based on actual testId from localStorage
     window.onload = function () {
         const savedTests = JSON.parse(localStorage.getItem('savedTests')) || {};
@@ -163,7 +265,7 @@
             if (testId) {
                 btn.onclick = function () {
                     if (!btn.disabled) {
-                        window.location.href = 'Test.html?id=' + testId;
+                        showTest(testId);
                     }
                 };
             }
@@ -172,5 +274,6 @@
 </script>
 
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93d281f69e24e592',t:'MTc0NjgwNzQ1My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93e4a695ae7f675d',t:'MTc0Njk5NzY5Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 </body>
 </html>
