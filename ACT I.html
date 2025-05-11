@@ -37,51 +37,11 @@
         }
         return gk_fileData[filename] || "";
         }
-        </script><script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex));
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-</script>
-<!DOCTYPE html>
+        </script><!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<title>ACT I Test List</title>
+<title>ACT I.html Test List</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <style>
     * {
@@ -147,79 +107,12 @@
     .center-text {
         text-align: center;
     }
-    #testPreview {
-        display: none;
-        margin-top: 20px;
-        padding: 20px;
-        background-color: #fff;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-    }
-    #testPreview.show {
-        display: block;
-    }
-    .question {
-        margin-bottom: 15px;
-    }
-    .options {
-        margin-left: 20px;
-        margin-top: 5px;
-    }
-    .options label {
-        display: block;
-        margin-bottom: 5px;
-    }
-    .close-btn, .submit-btn {
-        padding: 5px 10px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-    }
-    .close-btn {
-        background-color: #e74c3c;
-        color: white;
-        float: right;
-    }
-    .close-btn:hover {
-        background-color: #c0392b;
-    }
-    .submit-btn {
-        background-color: #2ecc71;
-        color: white;
-        margin-top: 10px;
-    }
-    .submit-btn:hover {
-        background-color: #27ae60;
-    }
-    .feedback {
-        margin-top: 5px;
-        font-weight: bold;
-    }
-    .correct {
-        color: #2ecc71;
-    }
-    .incorrect {
-        color: #e74c3c;
-    }
-    #score {
-        margin-top: 10px;
-        font-weight: bold;
-        color: #2c3e50;
-    }
-    .instruction {
-        color: #7f8c8d;
-        font-style: italic;
-    }
-    .confirmation {
-        color: #2c3e50;
-        margin-top: 5px;
-    }
 </style>
 </head>
 <body>
 <div class="container">
 <a class="back-btn" href="javascript:history.back()">← Back</a>
-<h2>ACT I Test List</h2>
+<h2>ACT I.html Test List</h2>
 <table>
 <thead>
 <tr>
@@ -231,20 +124,11 @@
 </thead>
 <tbody id="testList"></tbody>
 </table>
-<div id="testPreview">
-    <button class="close-btn" onclick="resetPreview()">Close</button>
-    <h3 id="previewTitle"></h3>
-    <form id="testForm">
-        <div id="previewContent"></div>
-        <button type="button" class="submit-btn" onclick="submitTest()">Submit</button>
-    </form>
-    <div id="score"></div>
-</div>
 </div>
 
 <script>
     const testType = "act-i";
-    let currentTestId = null;
+    loadTests();
 
     function loadTests() {
         const savedTests = JSON.parse(localStorage.getItem('savedTests')) || {};
@@ -254,134 +138,39 @@
         Object.keys(savedTests).forEach(testId => {
             const test = savedTests[testId];
             if (test.type === testType) {
-                const isPaid = test.data?.isPaid || false;
+                const isPaid = test.data?.isPaid || false; // Default to false if isPaid is undefined
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${test.name || test.data?.title || 'Unnamed Test'}</td>
                     <td>${isPaid ? 'Paid' : 'Free'}</td>
                     <td class="center-text">${new Date(test.createdAt).toLocaleString()}</td>
                     <td class="center-text">
-                        <button class="preview-btn" onclick="showTest('${testId}')" ${isPaid ? 'disabled' : ''}>Preview</button>
+                        <a href="#" class="preview-btn">Preview</a>
                     </td>
                 `;
                 testList.appendChild(row);
             }
         });
     }
+</script>
 
-    function showTest(testId) {
-        const savedTests = JSON.parse(localStorage.getItem('savedTests')) || {};
-        const test = savedTests[testId];
-        if (test && !test.data?.isPaid) {
-            currentTestId = testId;
-            const previewTitle = document.getElementById('previewTitle');
-            const previewContent = document.getElementById('previewContent');
-            previewTitle.textContent = test.name || test.data?.title || 'Unnamed Test';
-            previewContent.innerHTML = '';
-
-            console.log('Test Data:', test); // Debug log to check test structure
-
-            if (test.data?.questions && Array.isArray(test.data.questions) && test.data.questions.length > 0) {
-                test.data.questions.forEach((q, index) => {
-                    const questionDiv = document.createElement('div');
-                    questionDiv.className = 'question';
-                    questionDiv.innerHTML = `
-                        <p><strong>Question ${index + 1}:</strong> ${q.question}</p>
-                        <div class="options">
-                            ${q.options ? q.options.map((opt, i) => `
-                                <label>
-                                    <input type="radio" name="q${index}" value="${opt}" required>
-                                    ${String.fromCharCode(97 + i)}. ${opt}
-                                </label>
-                            `).join('') : ''}
-                        </div>
-                        <div class="feedback" id="feedback${index}"></div>
-                    `;
-                    previewContent.appendChild(questionDiv);
-                });
-            } else {
-                previewContent.innerHTML = `
-                    <p>No questions available for this test.</p>
-                    <p class="instruction">Please create or update this test with questions via the test creation page.</p>
-                `;
-            }
-            document.getElementById('testPreview').classList.add('show');
-            document.getElementById('score').textContent = '';
-        }
-    }
-
-    function submitTest() {
-        const savedTests = JSON.parse(localStorage.getItem('savedTests')) || {};
-        const test = savedTests[currentTestId];
-        if (!test) {
-            document.getElementById('score').textContent = 'Error: Test not found.';
-            return;
-        }
-
-        if (!test.data?.questions || !Array.isArray(test.data.questions) || test.data.questions.length === 0) {
-            document.getElementById('score').textContent = 'Cannot submit: No questions available.';
-            return;
-        }
-
-        let score = 0;
-        const total = test.data.questions.length;
-        test.data.questions.forEach((q, index) => {
-            const selectedOption = document.querySelector(`input[name="q${index}"]:checked`);
-            const feedback = document.getElementById(`feedback${index}`);
-            if (selectedOption) {
-                const userAnswer = selectedOption.value;
-                const isCorrect = userAnswer === q.answer;
-                if (isCorrect) {
-                    score++;
-                    feedback.textContent = 'Correct!';
-                    feedback.className = 'feedback correct';
-                } else {
-                    feedback.textContent = `Incorrect. Correct answer: ${q.answer}`;
-                    feedback.className = 'feedback incorrect';
-                }
-            } else {
-                feedback.textContent = 'Please select an answer.';
-                feedback.className = 'feedback incorrect';
-            }
-        });
-
-        // Display score and confirmation
-        document.getElementById('score').innerHTML = `
-            Score: ${score}/${total}<br>
-            <span class="confirmation">Submission recorded successfully!</span>
-        `;
-
-        // Save the score to localStorage
-        const userScores = JSON.parse(localStorage.getItem('userScores')) || {};
-        userScores[currentTestId] = {
-            testName: test.data?.title || 'Unnamed Test',
-            score: score,
-            total: total,
-            timestamp: new Date().getTime()
-        };
-        localStorage.setItem('userScores', JSON.stringify(userScores));
-
-        // Clear selections for resubmission
-        document.querySelectorAll('input[type="radio"]').forEach(input => input.checked = false);
-        test.data.questions.forEach((q, index) => {
-            document.getElementById(`feedback${index}`).textContent = '';
-        });
-    }
-
-    function resetPreview() {
-        document.getElementById('testPreview').classList.remove('show');
-        document.getElementById('previewContent').innerHTML = '';
-        document.getElementById('score').textContent = '';
-        document.querySelectorAll('input[type="radio"]').forEach(input => input.checked = false);
-        currentTestId = null;
-    }
-
+<script>
+    // Override preview button behavior based on actual testId from localStorage
     window.onload = function () {
-        loadTests();
+        const savedTests = JSON.parse(localStorage.getItem('savedTests')) || {};
+        document.querySelectorAll('.preview-btn').forEach((btn, index) => {
+            const testId = Object.keys(savedTests).filter(id => savedTests[id].type === 'act-i')[index];
+            if (testId) {
+                btn.onclick = function () {
+                    if (!btn.disabled) {
+                        window.location.href = 'Test.html?id=' + testId;
+                    }
+                };
+            }
+        });
     };
 </script>
 
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93d281f69e24e592',t:'MTc0NjgwNzQ1My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93e4a695ae7f675d',t:'MTc0Njk5NzY5Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 </body>
 </html>
