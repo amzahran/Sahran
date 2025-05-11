@@ -66,7 +66,7 @@
                 }
 
                 // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex));
                 csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
                 return csv;
             } catch (e) {
@@ -165,17 +165,46 @@
         margin-left: 20px;
         margin-top: 5px;
     }
+    .options label {
+        display: block;
+        margin-bottom: 5px;
+    }
+    .close-btn, .submit-btn {
+        padding: 5px 10px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
     .close-btn {
         background-color: #e74c3c;
         color: white;
-        border: none;
-        padding: 5px 10px;
-        border-radius: 4px;
-        cursor: pointer;
         float: right;
     }
     .close-btn:hover {
         background-color: #c0392b;
+    }
+    .submit-btn {
+        background-color: #2ecc71;
+        color: white;
+        margin-top: 10px;
+    }
+    .submit-btn:hover {
+        background-color: #27ae60;
+    }
+    .feedback {
+        margin-top: 5px;
+        font-weight: bold;
+    }
+    .correct {
+        color: #2ecc71;
+    }
+    .incorrect {
+        color: #e74c3c;
+    }
+    #score {
+        margin-top: 10px;
+        font-weight: bold;
+        color: #2c3e50;
     }
 </style>
 </head>
@@ -195,15 +224,19 @@
 <tbody id="testList"></tbody>
 </table>
 <div id="testPreview">
-    <button class="close-btn" onclick="document.getElementById('testPreview').classList.remove('show')">Close</button>
+    <button class="close-btn" onclick="resetPreview()">Close</button>
     <h3 id="previewTitle"></h3>
-    <div id="previewContent"></div>
+    <form id="testForm">
+        <div id="previewContent"></div>
+        <button type="button" class="submit-btn" onclick="submitTest()">Submit</button>
+    </form>
+    <div id="score"></div>
 </div>
 </div>
 
 <script>
     const testType = "act-i";
-    loadTests();
+    let currentTestId = null;
 
     function loadTests() {
         const savedTests = JSON.parse(localStorage.getItem('savedTests')) || {};
@@ -232,6 +265,7 @@
         const savedTests = JSON.parse(localStorage.getItem('savedTests')) || {};
         const test = savedTests[testId];
         if (test && !test.data?.isPaid) {
+            currentTestId = testId;
             const previewTitle = document.getElementById('previewTitle');
             const previewContent = document.getElementById('previewContent');
             previewTitle.textContent = test.name || test.data?.title || 'Unnamed Test';
@@ -244,9 +278,14 @@
                     questionDiv.innerHTML = `
                         <p><strong>Question ${index + 1}:</strong> ${q.question}</p>
                         <div class="options">
-                            ${q.options ? q.options.map((opt, i) => `<p>${String.fromCharCode(97 + i)}. ${opt}</p>`).join('') : ''}
-                            ${q.answer ? `<p><strong>Answer:</strong> ${q.answer}</p>` : ''}
+                            ${q.options ? q.options.map((opt, i) => `
+                                <label>
+                                    <input type="radio" name="q${index}" value="${opt}" required>
+                                    ${String.fromCharCode(97 + i)}. ${opt}
+                                </label>
+                            `).join('') : ''}
                         </div>
+                        <div class="feedback" id="feedback${index}"></div>
                     `;
                     previewContent.appendChild(questionDiv);
                 });
@@ -254,22 +293,51 @@
                 previewContent.textContent = 'No questions available for this test.';
             }
             document.getElementById('testPreview').classList.add('show');
+            document.getElementById('score').textContent = '';
         }
     }
 
-    // Override preview button behavior based on actual testId from localStorage
-    window.onload = function () {
+    function submitTest() {
         const savedTests = JSON.parse(localStorage.getItem('savedTests')) || {};
-        document.querySelectorAll('.preview-btn').forEach((btn, index) => {
-            const testId = Object.keys(savedTests).filter(id => savedTests[id].type === 'act-i')[index];
-            if (testId) {
-                btn.onclick = function () {
-                    if (!btn.disabled) {
-                        showTest(testId);
-                    }
-                };
+        const test = savedTests[currentTestId];
+        if (!test || !test.data?.questions) return;
+
+        let score = 0;
+        const total = test.data.questions.length;
+        test.data.questions.forEach((q, index) => {
+            const selectedOption = document.querySelector(`input[name="q${index}"]:checked`);
+            const feedback = document.getElementById(`feedback${index}`);
+            if (selectedOption) {
+                const userAnswer = selectedOption.value;
+                const isCorrect = userAnswer === q.answer;
+                if (isCorrect) {
+                    score++;
+                    feedback.textContent = 'Correct!';
+                    feedback.className = 'feedback correct';
+                } else {
+                    feedback.textContent = `Incorrect. Correct answer: ${q.answer}`;
+                    feedback.className = 'feedback incorrect';
+                }
+            } else {
+                feedback.textContent = 'Please select an answer.';
+                feedback.className = 'feedback incorrect';
             }
         });
+
+        document.getElementById('score').textContent = `Score: ${score}/${total}`;
+        document.querySelector('.submit-btn').disabled = true;
+    }
+
+    function resetPreview() {
+        document.getElementById('testPreview').classList.remove('show');
+        document.getElementById('previewContent').innerHTML = '';
+        document.getElementById('score').textContent = '';
+        document.querySelector('.submit-btn').disabled = false;
+        currentTestId = null;
+    }
+
+    window.onload = function () {
+        loadTests();
     };
 </script>
 
