@@ -433,14 +433,14 @@
     }
 
     function openCreateTest(type) {
-      window.location.href = `CreateTests1.html?type=${type}&action=create`;
+      window.location.href = `CreateTests.html?type=${type}&action=create`;
     }
 
     window.onload = function() {
       const urlParams = new URLSearchParams(window.location.search);
       const action = urlParams.get('action');
       if (action === 'create') {
-        window.location.href = `CreateTests1.html?type=${urlParams.get('type')}&action=create`;
+        window.location.href = `CreateTests.html?type=${urlParams.get('type')}&action=create`;
       }
 
       const tests = JSON.parse(localStorage.getItem('savedTests')) || {};
