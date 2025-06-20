@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Resources</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
+    .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    h1 { text-align: center; color: #2c3e50; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #f1c40f; }
+
+    .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+    select, input[type="text"], button {
+      padding: 8px 12px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      min-width: 120px;
+    }
+
+    .upload-btn {
+      background-color: #3498db;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 4px;
+      padding: 10px 16px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .export-btn {
+      background-color: #2ecc71;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 4px;
+      padding: 10px 16px;
+      cursor: pointer;
+    }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    th { background-color: #34495e; color: white; position: sticky; top: 0; }
+    tr:nth-child(even) { background-color: #f9f9f9; }
+    tr:hover { background-color: #f1f1f1; }
+    .action-btn { padding: 6px 12px; border-radius: 4px; color: white; text-decoration: none; font-weight: bold; cursor: pointer; margin: 2px; display: inline-block; }
+    .download-btn { background-color: #27ae60; }
+    .delete-btn { background-color: #e74c3c; }
+    .type-badge { padding: 3px 10px; border-radius: 12px; background-color: #e0e0e0; font-size: 12px; display: inline-block; min-width: 60px; text-align: center; }
+    .public-badge { background-color: #2ecc71; color: white; }
+    .private-badge { background-color: #e74c3c; color: white; }
+    .loading { text-align: center; padding: 20px; }
+    .loading-spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>All Resources</h1>
+
+    <div class="controls" style="justify-content: space-between;">
+      <div class="filters">
+        <label>Category:</label>
+        <select id="categoryFilter">
+          <option value="all">All Categories</option>
+          <option value="ACT I">ACT I</option>
+          <option value="ACT II">ACT II</option>
+          <option value="EST I">EST I</option>
+          <option value="EST II">EST II</option>
+          <option value="Digital SAT">Digital SAT</option>
+          <option value="University Courses">University Courses</option>
+        </select>
+
+        <label>Type:</label>
+        <select id="typeFilter">
+          <option value="all">All Types</option>
+          <option value="Book">Book</option>
+          <option value="Test">Test</option>
+          <option value="Video">Video</option>
+          <option value="Picture">Picture</option>
+          <option value="Other (Web Link)">Other (Web Link)</option>
+        </select>
+
+
+        <label>Visibility:</label>
+        <select id="visibilityFilter">
+          <option value="all">All</option>
+          <option value="public">Public</option>
+          <option value="private">Private</option>
+        </select>
+
+        <input type="text" id="searchInput" placeholder="Search by name..." />
+      </div>
+
+      <div style="margin-left: auto; display: flex; gap: 10px;">
+        <button class="export-btn" onclick="exportToExcel()">Export to Excel</button>
+        <a href="upload_files.html" class="upload-btn">Upload New Resource</a>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Category</th>
+          <th>Uploaded</th>
+          <th>Visibility</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="resourceTableBody">
+        <tr><td colspan="6" class="loading"><div class="loading-spinner"></div> Loading resources...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  
+<script>
+let allResources = [];
+
+function loadResources() {
+  fetch("get_resources.php?admin=1")
+    .then(res => res.json())
+    .then(data => {
+      if (!data.data) return;
+      allResources = data.data;
+      
+      applyFilters();
+    });
+}
+
+function applyFilters() {
+  const category = document.getElementById("categoryFilter")?.value || "all";
+  const type = document.getElementById("typeFilter")?.value || "all";
+  const visibility = document.getElementById("visibilityFilter")?.value || "all";
+  const search = document.getElementById("searchInput")?.value.toLowerCase() || "";
+
+  
+const filtered = allResources.filter(resource => {
+  const normalizedType = normalizeType(resource.Type);
+  const normalizedCategory = normalizeCategory(resource.Category);
+
+    if (category !== "all" && normalizedCategory !== category) return false;
+    if (type !== "all" && normalizedType !== type) return false;
+
+    const isPublic = resource.IsPublic === true || resource.IsPublic === 1;
+    if (visibility === "public" && !isPublic) return false;
+    if (visibility === "private" && isPublic) return false;
+
+    if (!resource.Name.toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  renderTable(filtered);
+}
+
+function renderTable(data) {
+  const tbody = document.getElementById("resourceTableBody");
+  if (!tbody) return;
+
+  tbody.innerHTML = "";
+  if (data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6">No matching records found.</td></tr>';
+    return;
+  }
+
+  data.forEach(res => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${res.Name}</td>
+      <td>${normalizeType(res.Type)}</td>
+      <td>${normalizeCategory(res.Category)}</td>
+      <td>${new Date(res.UploadDate.date).toLocaleString()}</td>
+      <td>${res.IsPublic ? "Public" : "Private"}</td>
+      <td>
+        <a href="${res.Url}" download>Download</a>
+        <button onclick="deleteResource(${res.ID})" class="delete-btn">Delete</button>
+      </td>
+    `;
+    tbody.appendChild(row);
+  });
+}
+
+["categoryFilter", "typeFilter", "visibilityFilter", "searchInput"].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener("input", applyFilters);
+});
+
+
+function normalizeType(type) {
+  switch(type.toLowerCase()) {
+    case 'pdf': return 'Book';
+    case 'word': return 'Book';
+    case 'test': return 'Test';
+    case 'video': return 'Video';
+    case 'image': return 'Picture';
+    case 'link': return 'Other (Web Link)';
+    default: return type;
+  }
+}
+
+function normalizeCategory(cat) {
+  switch(cat.toUpperCase()) {
+    case 'ACT-I': return 'ACT I';
+    case 'ACT-II': return 'ACT II';
+    case 'SAT-I': return 'SAT I';
+    case 'SAT-II': return 'SAT II';
+    case 'DSAT': return 'Digital SAT';
+    case 'UNIVERSITY COURSES': return 'University Courses';
+    default: return cat;
+  }
+}
+
+window.onload = loadResources;
+
+
+function deleteResource(id) {
+  if (!confirm("Are you sure you want to delete this resource?")) return;
+  fetch(`delete_resource_sqlsrv.php?id=${id}`, { method: "POST" })
+    .then(res => res.text())
+    .then(result => {
+      alert("Resource deleted successfully.");
+      loadResources();
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Failed to delete resource.");
+    });
+}
+</script>
+</body>
+
+</html>

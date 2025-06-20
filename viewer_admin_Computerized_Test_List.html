@@ -1,0 +1,162 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Computerized Tests List</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f5f5f5; }
+        .container { max-width: 1100px; margin: 40px auto; background: white; padding: 20px; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px 15px; border: 1px solid #ccc; text-align: center; }
+        th { background-color: #007bff; color: white; }
+        button { padding: 6px 12px; margin: 0 2px; border: none; border-radius: 4px; cursor: pointer; }
+        .edit-btn { background-color: #28a745; color: white; }
+        .preview-btn { background-color: #ffc107; color: black; }
+        .delete-btn { background-color: #dc3545; color: white; }
+        .filters {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .filters select, .filters input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="#" onclick="history.back()">&larr; Back</a>
+        <h2>Computerized Tests List</h2>
+
+        <div class="filters">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <label>Type:</label>
+                <select id="typeFilter">
+                    <option value="all">All</option>
+                    <option value="Free">Free</option>
+                    <option value="Paid">Paid</option>
+                </select>
+
+                <label>Category:</label>
+                <select id="categoryFilter">
+                    <option value="all">All</option>
+                    <option value="ACT I">ACT I</option>
+                    <option value="ACT II">ACT II</option>
+                    <option value="EST I">EST I</option>
+                    <option value="EST II">EST II</option>
+                    <option value="Digital SAT">Digital SAT</option>
+                    <option value="University Courses">University Courses</option>
+                </select>
+            </div>
+
+            <div style="margin-left: auto;">
+                <input type="text" id="searchInput" placeholder="Search by title...">
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Test Name</th>
+                    <th>Free/Paid</th>
+                    <th>Category</th>
+                    <th>Created At</th>
+                    <th>Updated At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="testList"></tbody>
+        </table>
+    </div>
+
+    <script>
+        let allTests = [];
+
+        async function loadTests() {
+            const res = await fetch('get_tests.php');
+            const response = await res.json();
+            allTests = response.data;
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const type = document.getElementById('typeFilter').value;
+            const category = document.getElementById('categoryFilter').value;
+            const search = document.getElementById('searchInput').value.toLowerCase();
+
+            const filtered = allTests.filter(test => {
+                if (type !== 'all' && test.TestType.toLowerCase() !== type.toLowerCase()) return false;
+                if (category !== 'all' && test.CategoryTest !== category) return false;
+                if (!test.TestTitle.toLowerCase().replace(/\s+/g, '').includes(search.replace(/\s+/g, '').toLowerCase())) return false;
+                return true;
+            });
+
+            renderTable(filtered);
+        }
+
+        function renderTable(data) {
+            const testList = document.getElementById("testList");
+            testList.innerHTML = '';
+
+            if (data.length === 0) {
+                testList.innerHTML = `<tr><td colspan="6">No tests found.</td></tr>`;
+                return;
+            }
+
+            data.forEach(test => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${test.TestTitle}</td>
+                    <td>${test.TestType}</td>
+                    <td>${test.CategoryTest || ''}</td>
+                    <td>${test.CreatedAt}</td>
+                    <td>${test.UpdatedAt || ''}</td>
+                    <td>
+                        <button class="edit-btn" onclick="editTest(${test.TestID})">Edit</button>
+                        <button class="preview-btn" onclick="previewTest(${test.TestID})">Preview</button>
+                        <button class="delete-btn" onclick="deleteTest(${test.TestID})">Delete</button>
+                    </td>
+                `;
+                testList.appendChild(tr);
+            });
+        }
+
+        function editTest(id) {
+            window.location.href = `edit_test.html?testID=${id}`;
+        }
+
+        function previewTest(id) {
+            window.location.href = `preview_test.html?testID=${id}`;
+        }
+
+        async function deleteTest(id) {
+            if (!confirm("Are you sure you want to delete this test?")) return;
+            const res = await fetch('delete_test.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ testID: id })
+            });
+            const result = await res.json();
+            if (result.status === 'success') {
+                alert('Test deleted successfully');
+                loadTests();
+            } else {
+                alert('Error deleting test: ' + result.message);
+            }
+        }
+
+        ["typeFilter", "categoryFilter", "searchInput"].forEach(id => {
+            document.getElementById(id).addEventListener('input', applyFilters);
+        });
+
+        loadTests();
+    </script>
+</body>
+</html>

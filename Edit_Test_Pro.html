@@ -1,0 +1,372 @@
+<!-- edit_test_PRO.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Edit Test</title>
+  <style>
+    body {
+      font-family: Arial;
+      padding: 10px;
+    }
+
+    .section {
+      border: 1px solid #ccc;
+      margin-bottom: 20px;
+      padding: 10px;
+    }
+
+    .question {
+      border: 1px solid #999;
+      margin: 10px 0;
+      padding: 10px;
+      background: #f9f9f9;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .questionHeader {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .questionText {
+      width: 70%;
+      height: 70px;
+      padding: 8px;
+      font-size: 0.95rem;
+      resize: vertical;
+    }
+
+    .questionImageInput {
+      width: 28%;
+      margin-top: 5px;
+    }
+
+    .optionText {
+      width: 36%;
+      padding: 4px;
+    }
+
+    .optionImage {
+      width: 100px;
+    }
+
+    .isCorrect {
+      margin: 0 5px;
+    }
+
+    .option span {
+      min-width: 50px;
+      display: inline-block;
+      text-align: left;
+    }
+
+    .option {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 6px;
+      margin: 2px 0;
+    }
+
+    .gridinAnswer {
+      margin-top: 8px;
+    }
+
+    button {
+      margin-top: 10px;
+    }
+
+    .previewImage {
+      margin-top: 5px;
+      max-height: 100px;
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Edit Test</h1>
+  <label>Test Title: <input type="text" id="testTitle"></label><br>
+  <label>Test Type:
+    <select id="testType" onchange="togglePriceField()">
+      <option value="Free">Free</option>
+      <option value="Paid">Paid</option>
+    </select>
+  </label><br>
+  <div id="priceContainer" style="display:none;">
+    <label>Price: <input type="number" id="price" value="0"></label><br>
+  </div>
+  <label>Category:
+    <select id="category">
+      <option value="ACT I">ACT I</option>
+      <option value="ACT II">ACT II</option>
+      <option value="EST I">EST I</option>
+      <option value="EST II">EST II</option>
+      <option value="Digital SAT">Digital SAT</option>
+      <option value="Univ Courses">Univ Courses</option>
+    </select>
+  </label><br><br>
+
+  <div id="sectionsContainer"></div>
+
+  <div style="text-align: center; margin: 20px;">
+    <button id="saveTestBtn"
+      style="padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: #4CAF50; color: white; border: none; border-radius: 5px;">
+      💾 Save Test
+    </button>
+  </div>
+
+  <script>
+    let testID = null;
+
+    function previewImage(input) {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const img = input.parentElement.querySelector(".previewImage");
+        if (img) {
+          img.src = e.target.result;
+          img.style.display = 'block';
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function toggleOptions(selectElement) {
+      const questionDiv = selectElement.closest('.question');
+      const optionsContainer = questionDiv.querySelector('.optionsContainer');
+      const gridAnswer = questionDiv.querySelector('.gridinAnswer');
+      if (selectElement.value === 'GridIn') {
+        optionsContainer.style.display = 'none';
+        gridAnswer.style.display = 'block';
+      } else {
+        optionsContainer.style.display = 'block';
+        gridAnswer.style.display = 'none';
+      }
+    }
+
+    function togglePriceField() {
+      const type = document.getElementById("testType").value;
+      document.getElementById("priceContainer").style.display = (type === "Paid") ? "block" : "none";
+    }
+
+    function removeQuestion(button) {
+      button.parentElement.remove();
+    }
+
+    function addQuestion(button) {
+      const container = button.parentElement.querySelector(".questionsContainer");
+      const section = button.parentElement;
+      const maxQuestions = parseInt(section.querySelector(".sectionQuestionCount").value);
+      const currentQuestions = container.querySelectorAll(".question").length;
+      if (currentQuestions >= maxQuestions) {
+        alert(`❗ You cannot add more than ${maxQuestions} questions in this section.`);
+        return;
+      }
+      const qID = `q${Date.now()}`;
+      const questionHTML = `
+        <div class="question" id="${qID}">
+          <div class="questionHeader">
+            <textarea class="questionText" placeholder="Enter question text..."></textarea>
+            <input type="file" class="questionImageInput" onchange="previewImage(this)">
+            <img class="previewImage" style="display:none;" />
+          </div>
+          <label>Type:
+            <select class="questionType" onchange="toggleOptions(this)">
+              <option value="MCQ">MCQ</option>
+              <option value="GridIn">Grid-In</option>
+            </select>
+          </label><br>
+          <div class="optionsContainer">
+            ${[1, 2, 3, 4].map(i => `
+              <div class="option">
+                <input type="text" class="optionText">
+                <input type="file" class="optionImage" onchange="previewImage(this)">
+                <img class="previewImage" style="display:none;" />
+                <input type="checkbox" class="isCorrect"><span>Correct</span>
+              </div>
+            `).join('')}
+          </div>
+          <div class="gridinAnswer" style="display:none;">
+            <label>Correct Answer: <input type="text" class="gridInText"></label>
+          </div>
+          <button onclick="removeQuestion(this)" style="background-color:#f44336; color:white; padding:4px 10px; border:none; border-radius:4px;">🗑️ Remove Question</button>
+        </div>
+      `;
+      container.insertAdjacentHTML('beforeend', questionHTML);
+    }
+
+    async function loadTestData() {
+      const urlParams = new URLSearchParams(window.location.search);
+      testID = urlParams.get('testID') || urlParams.get('testid');
+      if (!testID) {
+        alert("Missing testID in URL");
+        return;
+      }
+
+      try {
+        const res = await fetch(`get_full_test_PRO.php?testID=${testID}`);
+        const data = await res.json();
+
+        document.getElementById("testTitle").value = data.TestTitle;
+        document.getElementById("testType").value = data.TestType;
+        document.getElementById("category").value = data.CategoryTest || "";
+        document.getElementById("price").value = data.Price || 0;
+
+        if (data.TestType === "Paid") {
+          document.getElementById("priceContainer").style.display = "block";
+        }
+
+        data.Sections.forEach((section, sectionIndex) => {
+          const sectionID = `section${sectionIndex}`;
+          const sectionHTML = `
+            <div class="section" id="${sectionID}">
+              <label>Break After This Section (min): <input type="number" class="sectionBreak" value="${section.BreakDuration || 10}"></label><br>
+              <h3>${section.SectionTitle}</h3>
+              <label>Section Title: <input type="text" class="sectionTitle" value="${section.SectionTitle}"></label><br>
+              <label>Duration (min): <input type="number" class="sectionDuration" value="${section.Duration}"></label><br>
+              <label>Number of Questions: <input type="number" class="sectionQuestionCount" value="${section.Questions.length}" ></label><br>
+              <div class="questionsContainer"></div>
+              <button onclick="addQuestion(this)" style="background-color:#2196F3; color:white; padding:4px 10px; border:none; border-radius:4px;">➕ Add Question</button>
+            </div>
+          `;
+          document.getElementById('sectionsContainer').insertAdjacentHTML('beforeend', sectionHTML);
+          const sectionDiv = document.getElementById(sectionID);
+          const questionsContainer = sectionDiv.querySelector('.questionsContainer');
+
+          section.Questions.forEach((q, qIndex) => {
+            const qID = `q_${sectionIndex}_${qIndex}`;
+            const questionHTML = `
+              <div class="question" id="${qID}">
+                <div class="questionHeader">
+                  <textarea class="questionText">${q.QuestionText}</textarea>
+                  <input type="file" class="questionImageInput" onchange="previewImage(this)">
+                  ${q.QuestionImage ? `<img class="previewImage" src="${q.QuestionImage}" style="display:block;">` : '<img class="previewImage" style="display:none;">'}
+                </div>
+                <label>Type:
+                  <select class="questionType" onchange="toggleOptions(this)">
+                    <option value="MCQ" ${q.QuestionType === 'MCQ' ? 'selected' : ''}>MCQ</option>
+                    <option value="GridIn" ${q.QuestionType === 'GridIn' ? 'selected' : ''}>Grid-In</option>
+                  </select>
+                </label><br>
+                <div class="optionsContainer" style="${q.QuestionType === 'MCQ' ? '' : 'display:none;'}">
+                  ${(q.Options || []).map(opt => `
+                    <div class="option">
+                      <input type="text" class="optionText" value="${opt.OptionText}">
+                      <input type="file" class="optionImage" onchange="previewImage(this)">
+                      ${opt.OptionImage ? `<img class="previewImage" src="${opt.OptionImage}" style="display:block;">` : '<img class="previewImage" style="display:none;">'}
+                      <input type="checkbox" class="isCorrect" ${opt.IsCorrect ? 'checked' : ''}><span>Correct</span>
+                    </div>
+                  `).join('')}
+                </div>
+                <div class="gridinAnswer" style="${q.QuestionType === 'GridIn' ? '' : 'display:none;'}">
+                  <label>Correct Answer: <input type="text" class="gridInText" value="${q.QuestionType === 'GridIn' ? q.Options?.find(o => o.IsCorrect)?.OptionText || '' : ''}"></label>
+                </div>
+                <button onclick="removeQuestion(this)" style="background-color:#f44336; color:white; padding:4px 10px; border:none; border-radius:4px;">🗑️ Remove Question</button>
+              </div>
+            `;
+            questionsContainer.insertAdjacentHTML('beforeend', questionHTML);
+          });
+        });
+
+      } catch (err) {
+        console.error("Error loading test data:", err);
+        alert("Failed to load test data.");
+      }
+    }
+
+    window.onload = function () {
+      loadTestData();
+    };
+
+    document.getElementById('saveTestBtn').addEventListener('click', async () => {
+      const testData = collectTestData();
+
+      try {
+        const response = await fetch('save_edited_test_PRO.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(testData)
+        });
+
+        const result = await response.text();
+        alert(result);
+      } catch (error) {
+        console.error('Error saving test:', error);
+        alert('❌ Failed to save test.');
+      }
+    });
+
+    function collectTestData() {
+      const testTitle = document.getElementById('testTitle').value;
+      const testType = document.getElementById('testType').value;
+      const category = document.getElementById('category').value;
+      const price = parseFloat(document.getElementById('price').value) || 0;
+      const sections = [];
+
+      document.querySelectorAll('.section').forEach((sectionDiv, sectionIndex) => {
+        const sectionTitle = sectionDiv.querySelector('.sectionTitle').value;
+        const duration = parseInt(sectionDiv.querySelector('.sectionDuration').value);
+        const breakDuration = parseInt(sectionDiv.querySelector('.sectionBreak').value);
+        const sectionQuestionCount = parseInt(sectionDiv.querySelector('.sectionQuestionCount').value);
+        const questions = [];
+
+        sectionDiv.querySelectorAll('.question').forEach(questionDiv => {
+          const questionText = questionDiv.querySelector('.questionText').value;
+          const questionType = questionDiv.querySelector('.questionType').value;
+          const options = [];
+
+          if (questionType === 'MCQ') {
+            questionDiv.querySelectorAll('.option').forEach(optDiv => {
+              const optText = optDiv.querySelector('.optionText').value;
+              const isCorrect = optDiv.querySelector('.isCorrect').checked;
+              options.push({ OptionText: optText, IsCorrect: isCorrect });
+            });
+          } else if (questionType === 'GridIn') {
+            const answer = questionDiv.querySelector('.gridInText').value;
+            options.push({ OptionText: answer, IsCorrect: true });
+          }
+
+          const questionImage = questionDiv.querySelector(".previewImage")?.src;
+
+          questions.push({
+            QuestionText: questionText,
+            QuestionImage: questionImage !== "" ? questionImage : null,
+            QuestionType: questionType,
+            Options: options
+          });
+
+        });
+
+        sections.push({
+          SectionNumber: sectionIndex + 1,
+          SectionTitle: sectionTitle,              // ✅ الحل هنا
+          Duration: duration,
+          BreakDuration: breakDuration,
+          NumberOfQuestions: sectionQuestionCount,
+          Questions: questions
+        });
+
+      });
+
+      return {
+        TestID: testID,
+        TestTitle: testTitle,
+        TestType: testType,
+        CategoryTest: category,
+        Price: price,
+        Sections: sections
+      };
+    }
+  </script>
+</body>
+
+</html>
